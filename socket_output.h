@@ -1,0 +1,131 @@
+// -*- c++ -*-
+
+// Copyright (c) 2019, FlightAware LLC.
+// All rights reserved.
+// Licensed under the 2-clause BSD license; see the LICENSE file
+
+#ifndef SOCKET_OUTPUT_H
+#define SOCKET_OUTPUT_H
+
+#include <memory>
+#include <sstream>
+
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/asio/ip/tcp.hpp>
+
+#include "uat_message.h"
+#include "message_dispatch.h"
+
+namespace dump978 {
+    class SocketOutput : public std::enable_shared_from_this<SocketOutput> {
+    public:
+        typedef std::shared_ptr<SocketOutput> Pointer;
+
+        virtual void Start();
+        void Write(uat::SharedMessageVector messages);
+        virtual void Close();
+
+        void SetCloseNotifier(std::function<void()> notifier) {
+            close_notifier_ = notifier;
+        }
+
+        bool IsOpen() const {
+            return socket_.is_open();
+        }
+
+    protected:
+        SocketOutput(boost::asio::io_service &service_,
+                     boost::asio::ip::tcp::socket &&socket_);
+        std::ostringstream& Buf() { return outbuf_; }
+
+        virtual void InternalWrite(uat::SharedMessageVector messages) = 0;
+
+    private:
+        void HandleError(const boost::system::error_code &ec);
+        void Flush();
+        void ReadAndDiscard();
+
+        boost::asio::io_service &service_;
+        boost::asio::io_service::strand strand_;
+        boost::asio::ip::tcp::socket socket_;
+        boost::asio::ip::tcp::endpoint peer_;
+
+        std::ostringstream outbuf_;
+        bool flush_pending_;
+
+        std::function<void()> close_notifier_;
+    };
+
+    class RawOutput : public SocketOutput {
+    public:
+        // factory method, this class must always be constructed via make_shared
+        static Pointer Create(boost::asio::io_service &service,
+                              boost::asio::ip::tcp::socket &&socket)
+        {
+            return Pointer(new RawOutput(service, std::move(socket)));
+        }
+
+    protected:
+        void InternalWrite(uat::SharedMessageVector messages) override;
+
+    private:
+        RawOutput(boost::asio::io_service &service_, boost::asio::ip::tcp::socket &&socket_)
+            : SocketOutput(service_, std::move(socket_))
+        {}
+    };
+        
+    class JsonOutput : public SocketOutput {
+    public:
+        // factory method, this class must always be constructed via make_shared
+        static Pointer Create(boost::asio::io_service &service,
+                              boost::asio::ip::tcp::socket &&socket)
+        {
+            return Pointer(new JsonOutput(service, std::move(socket)));
+        }
+
+    protected:
+        void InternalWrite(uat::SharedMessageVector messages) override;
+
+    private:
+        JsonOutput(boost::asio::io_service &service_, boost::asio::ip::tcp::socket &&socket_)
+            : SocketOutput(service_, std::move(socket_))
+        {}
+    };
+        
+    class SocketListener : public std::enable_shared_from_this<SocketListener> {
+    public:
+        typedef std::shared_ptr<SocketListener> Pointer;
+        typedef std::function<SocketOutput::Pointer(boost::asio::io_service &,boost::asio::ip::tcp::socket &&)> ConnectionFactory;
+
+        // factory method, this class must always be constructed via make_shared
+        static Pointer Create(boost::asio::io_service &service,
+                              const boost::asio::ip::tcp::endpoint &endpoint,
+                              uat::MessageDispatch &dispatch,
+                              ConnectionFactory factory)
+        {
+            return Pointer(new SocketListener(service, endpoint, dispatch, factory));
+        }
+
+        void Start();
+        void Close();
+
+    private:
+        SocketListener(boost::asio::io_service &service,
+                       const boost::asio::ip::tcp::endpoint &endpoint,
+                       uat::MessageDispatch &dispatch,
+                       ConnectionFactory factory);
+
+        void Accept();
+        
+        boost::asio::io_service &service_;
+        boost::asio::ip::tcp::acceptor acceptor_;
+        boost::asio::ip::tcp::endpoint endpoint_;    
+        boost::asio::ip::tcp::socket socket_;
+        boost::asio::ip::tcp::endpoint peer_;
+        uat::MessageDispatch &dispatch_;
+        ConnectionFactory factory_;
+    };
+};
+
+#endif

@@ -1,0 +1,161 @@
+// -*- c++ -*-
+
+// Copyright (c) 2019, FlightAware LLC.
+// All rights reserved.
+// Licensed under the 2-clause BSD license; see the LICENSE file
+
+#ifndef FAUP978_TRACK_H
+#define FAUP978_TRACK_H
+
+#include <chrono>
+#include <memory>
+
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/asio/steady_timer.hpp>
+
+#include "uat_message.h"
+
+namespace uat {
+    template <class T>
+    class AgedField {
+    public:
+        AgedField() : v_() {}
+        AgedField(const T& v) : v_(v) {}
+
+        operator bool() const {
+            return (updated_ != 0);
+        }
+
+        std::uint64_t Changed() const {
+            return changed_;
+        }
+
+        std::uint64_t Updated() const {
+            return updated_;
+        }
+
+        std::uint64_t ChangeAge(std::uint64_t at) {
+            if (at < changed_) {
+                return 0;
+            } else {
+                return at - changed_;
+            }
+        }
+
+        std::uint64_t UpdateAge(std::uint64_t at) {
+            if (at < updated_) {
+                return 0;
+            } else {
+                return at - updated_;
+            }
+        }
+
+        bool MaybeUpdate(std::uint64_t at, const T& v) {
+            if (at > updated_) {
+                updated_ = at;                
+                if (v != v_) {
+                    changed_ = at;
+                }
+                v_ = v;
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        T Value() {
+            return v_;
+        }
+
+    private:
+        T v_;
+        std::uint64_t updated_ = 0;
+        std::uint64_t changed_ = 0;
+    };
+    
+    struct AircraftState {
+        AddressQualifier address_qualifier;
+        AdsbAddress address;
+        std::uint64_t last_message_time;
+        
+        AgedField<std::pair<double,double>> position;  // latitude, longitude
+        AgedField<int> pressure_altitude;
+        AgedField<int> geometric_altitude;
+        AgedField<unsigned> nic;
+        AgedField<AirGroundState> airground_state;
+        AgedField<int> north_velocity;
+        AgedField<int> east_velocity;
+        AgedField<VerticalVelocitySource> vv_src;
+        AgedField<int> vertical_velocity;
+        AgedField<int> ground_speed;
+        AgedField<double> magnetic_heading;
+        AgedField<double> true_heading;
+        AgedField<double> true_track;
+        AgedField<std::pair<double,double>> aircraft_size; // length, width
+        AgedField<double> gps_lateral_offset;
+        AgedField<double> gps_longitudinal_offset;
+        AgedField<bool> gps_position_offset_applied;
+        AgedField<bool> utc_coupled;
+
+        AgedField<unsigned> emitter_category;
+        AgedField<std::string> callsign;
+        AgedField<std::string> flightplan_id;   // aka Mode 3/A squawk
+        AgedField<EmergencyPriorityStatus> emergency;
+        AgedField<unsigned> mops_version;
+        AgedField<unsigned> sil;
+        AgedField<unsigned> transmit_mso;
+        AgedField<unsigned> sda;
+        AgedField<unsigned> nac_p;
+        AgedField<unsigned> nac_v;
+        AgedField<unsigned> nic_baro;
+        AgedField<CapabilityCodes> capability_codes;
+        AgedField<OperationalModes> operational_modes;        
+        AgedField<SILSupplement> sil_supplement;
+        AgedField<unsigned> gva;
+        AgedField<bool> single_antenna;
+        AgedField<bool> nic_supplement;
+
+        AgedField<SelectedAltitudeType> selected_altitude_type;
+        AgedField<int> selected_altitude;
+        AgedField<double> barometric_pressure_setting;
+        AgedField<double> selected_heading;
+        AgedField<ModeIndicators> mode_indicators;
+
+        void UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &message);
+    };
+    
+    typedef std::pair<AddressQualifier,AdsbAddress> AddressKey;
+
+    class Tracker : public std::enable_shared_from_this<Tracker> {
+    public:
+        typedef std::shared_ptr<Tracker> Pointer;
+        typedef std::map<AddressKey,AircraftState> MapType;
+
+        static Pointer Create(boost::asio::io_service &service, std::chrono::seconds timeout = std::chrono::seconds(300)) {
+            return Pointer(new Tracker(service, timeout));
+        }
+
+        void Start();
+        void Stop();
+        void HandleMessages(SharedMessageVector messages);
+
+        const MapType &Aircraft() const { return aircraft_; }
+
+    private:
+        Tracker(boost::asio::io_service &service, std::chrono::seconds timeout)
+            : service_(service), strand_(service), timer_(service), timeout_(timeout)
+        {}
+
+        void PurgeOld();
+        void HandleMessage(std::uint64_t at, const uat::AdsbMessage &message);
+
+        boost::asio::io_service &service_;
+        boost::asio::io_service::strand strand_;
+        boost::asio::steady_timer timer_;
+        std::chrono::seconds timeout_;
+        MapType aircraft_;
+    };
+};
+
+#endif
