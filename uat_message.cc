@@ -160,7 +160,10 @@ namespace uat {
             // derive groundspeed, true track from north/east velocity for convenience
             if (north_velocity && east_velocity) { // nb: testing for presence, not non-zero value
                 ground_speed = RoundN(std::sqrt(1.0 * (*north_velocity) * (*north_velocity) + 1.0 * (*east_velocity) * (*east_velocity)), 1);
-                true_track = RoundN(std::atan2(*east_velocity, *north_velocity) * 180.0 / M_PI, 1);
+                auto angle = std::atan2(*east_velocity, *north_velocity) * 180.0 / M_PI;
+                if (angle < 0)
+                    angle += 360.0;
+                true_track = RoundN(angle, 1);
             }
 
             vv_src = static_cast<VerticalVelocitySource>(raw.Bits(16,2, 16,2));
