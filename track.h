@@ -134,10 +134,9 @@ namespace uat {
         void UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &message);
     };
     
-    typedef std::pair<AddressQualifier,AdsbAddress> AddressKey;
-
     class Tracker : public std::enable_shared_from_this<Tracker> {
     public:
+        typedef std::pair<AddressQualifier,AdsbAddress> AddressKey;
         typedef std::shared_ptr<Tracker> Pointer;
         typedef std::map<AddressKey,AircraftState> MapType;
 
