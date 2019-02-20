@@ -246,7 +246,7 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
     // generate the line
     std::cout << "clock"
               << '\t'
-              << now
+              << (now/1000)
               << '\t';
 
     static std::map<AddressQualifier,std::string> idtype_map = {
