@@ -66,7 +66,7 @@ namespace dump978 {
         if (writebuf->empty())
             return;
 
-        flush_pending_ = true;                
+        flush_pending_ = true;
         outbuf_.str(std::string());
 
         auto self(shared_from_this());

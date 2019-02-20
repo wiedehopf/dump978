@@ -112,7 +112,7 @@ static int realmain(int argc, char **argv)
 
     MessageDispatch dispatch;
     SampleSource::Pointer source;
-    
+
     tcp::resolver resolver(io_service);
 
     auto format = opts["format"].as<format_option>().format;

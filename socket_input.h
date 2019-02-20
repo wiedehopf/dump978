@@ -19,7 +19,7 @@ namespace uat {
     class RawInput : public MessageSource, public std::enable_shared_from_this<RawInput> {
     public:
         typedef std::shared_ptr<RawInput> Pointer;
-        
+
         static Pointer Create(boost::asio::io_service &service,
                               const std::string &host,
                               const std::string &port_or_service) {
@@ -55,4 +55,4 @@ namespace uat {
 
 #endif
 
-                         
+

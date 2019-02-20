@@ -45,7 +45,7 @@ void Reporter::PeriodicReport()
 {
     static auto unix_epoch = std::chrono::system_clock::from_time_t(0);
     const std::uint64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - unix_epoch).count();
-    
+
     for (const auto &entry : tracker_->Aircraft()) {
         ReportOneAircraft(entry.first, entry.second, now);
     }
@@ -68,7 +68,7 @@ void Reporter::PeriodicReport()
 }
 
 void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const AircraftState &aircraft, std::uint64_t now)
-{    
+{
     auto &last = reported_[key];
     auto &last_state = last.report_state;
 
@@ -141,8 +141,8 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
         return;
     }
 
-    std::vector<std::pair<std::string,std::string>> kv;        
-        
+    std::vector<std::pair<std::string,std::string>> kv;
+
     static std::map<AddressQualifier,std::string> source_map = {
         { AddressQualifier::ADSB_ICAO,  "A" },
         { AddressQualifier::ADSB_OTHER, "A" },
@@ -182,7 +182,7 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
     add_slow_field("category", aircraft.emitter_category, [&aircraft](std::ostream &os) {
             os << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << (aircraft.emitter_category.Value() + 0xA0);
         });
-        
+
     add_slow_aged_field("nac_p",    aircraft.nac_p,    simple_emit(aircraft.nac_p));
     add_slow_aged_field("nac_v",    aircraft.nac_v,    simple_emit(aircraft.nac_v));
     add_slow_aged_field("sil",      aircraft.sil,      simple_emit(aircraft.sil));
@@ -271,7 +271,7 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
             { AddressQualifier::ADSR_OTHER,   "adsr_other" }
         };
         std::cout << "addrtype"
-                  << '\t'            
+                  << '\t'
                   << value_map(aircraft.address_qualifier, qualifier_map, "unknown");
     }
 

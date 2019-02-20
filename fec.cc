@@ -34,7 +34,7 @@ std::tuple<bool,uat::Bytes,unsigned> uat::FEC::CorrectDownlink(const Bytes &raw)
     // Try decoding as a Long UAT.
     Bytes corrected;
     std::copy(raw.begin(), raw.end(), std::back_inserter(corrected));
-    
+
     int n_corrected = ::decode_rs_char(rs_downlink_long_, corrected.data(), NULL, 0);
     if (n_corrected >= 0 && n_corrected <= 7 && (corrected[0]>>3) != 0) {
         // Valid long frame.

@@ -7,7 +7,7 @@
 #include <iostream>
 #include <chrono>
 
-namespace dump978 {    
+namespace dump978 {
     void FileSampleSource::Start() {
         stream_.open(path_.native());
         if (!stream_.good()) {
@@ -27,7 +27,7 @@ namespace dump978 {
     void FileSampleSource::Stop() {
         timer_.cancel();
         if (stream_.is_open()) {
-            stream_.close();            
+            stream_.close();
             DispatchError(boost::asio::error::eof);
         }
     }
@@ -83,7 +83,7 @@ namespace dump978 {
     //
     //
     //
-    
+
     void StdinSampleSource::Start() {
         stream_.assign(::dup(STDIN_FILENO));
         ScheduleRead();
@@ -116,7 +116,7 @@ namespace dump978 {
 
                                     used_ += bytes_transferred;
 
-                                    // work out a starting timestamp                                    
+                                    // work out a starting timestamp
                                     static auto unix_epoch = std::chrono::system_clock::from_time_t(0);
                                     auto end_of_block = std::chrono::system_clock::now();
                                     auto start_of_block = end_of_block - (std::chrono::milliseconds(1000) * bytes_transferred / samples_per_second_ / alignment_);

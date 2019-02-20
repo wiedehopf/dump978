@@ -27,7 +27,7 @@ namespace uat {
     const unsigned DOWNLINK_LONG_DATA_BITS = 272;
     const unsigned DOWNLINK_LONG_DATA_BYTES = DOWNLINK_LONG_DATA_BITS / 8;
     const unsigned DOWNLINK_LONG_BITS = 272 + 112;
-    const unsigned DOWNLINK_LONG_BYTES = DOWNLINK_LONG_BITS / 8;    
+    const unsigned DOWNLINK_LONG_BYTES = DOWNLINK_LONG_BITS / 8;
 
     const unsigned UPLINK_BLOCK_DATA_BITS = 576;
     const unsigned UPLINK_BLOCK_DATA_BYTES = UPLINK_BLOCK_DATA_BITS / 8;

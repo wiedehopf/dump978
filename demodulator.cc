@@ -69,19 +69,19 @@ namespace dump978 {
         //
         //    010101010101010000
         //                 ^
-        // Subtracting one, will flip the 
+        // Subtracting one, will flip the
         // bits starting at the last set bit:
         //
         //    010101010101001111
         //                 ^
-        // then we can use that as a bitwise-and 
+        // then we can use that as a bitwise-and
         // mask to clear the lowest set bit:
         //
         //    010101010101000000
         //                 ^
         // And repeat until the value is zero
         // or we have seen too many set bits.
-    
+
         // >= 1 bit
         diff &= (diff-1);   // clear lowest set bit
         if (!diff)
@@ -112,7 +112,7 @@ namespace dump978 {
     // element has the dphi threshold to use for bit slicing
     static inline std::pair<bool,std::int16_t> CheckSyncWord(const PhaseBuffer &buffer, unsigned start, std::uint64_t pattern) {
         const unsigned MAX_SYNC_ERRORS = 4;
-        
+
         std::int32_t dphi_zero_total = 0;
         int zero_bits = 0;
         std::int32_t dphi_one_total = 0;
@@ -215,10 +215,10 @@ namespace dump978 {
             return messages;
         }
         const auto limit = buffer.size() - trailing_samples;
-        
+
         unsigned sync_bits = 0;
         std::uint64_t sync0 = 0, sync1 = 0;
-        const std::uint64_t SYNC_MASK = ((((std::uint64_t)1)<<SYNC_BITS)-1);            
+        const std::uint64_t SYNC_MASK = ((((std::uint64_t)1)<<SYNC_BITS)-1);
 
         for (unsigned i = 0; i < limit; i += 2) {
             auto d0 = PhaseDifference(buffer[i], buffer[i + 1]);
@@ -246,7 +246,7 @@ namespace dump978 {
                 }
             }
 
-            if (SyncWordMatch(sync1, DOWNLINK_SYNC_WORD)) {                
+            if (SyncWordMatch(sync1, DOWNLINK_SYNC_WORD)) {
                 auto start = i - SYNC_BITS * 2 + 3;
                 auto start_timestamp = timestamp + start * 1000 / 2083333;
                 auto message = DemodBest(buffer, start, true /* downlink */, start_timestamp);
@@ -292,7 +292,7 @@ namespace dump978 {
 
         unsigned errors0 = (message0 ? message0.Errors() : 9999);
         unsigned errors1 = (message1 ? message1.Errors() : 9999);
-        
+
         if (errors0 <= errors1)
             return message0; // should be move-eligible
         else
@@ -311,7 +311,7 @@ namespace dump978 {
         bool success;
         uat::Bytes corrected;
         unsigned errors;
-        std::tie(success, corrected, errors) = fec_.CorrectDownlink(raw);        
+        std::tie(success, corrected, errors) = fec_.CorrectDownlink(raw);
         if (!success) {
             // Error correction failed
             return RawMessage();

@@ -111,5 +111,5 @@ int main(int argc, char **argv)
     }
 #else
     return realmain(argc, argv);
-#endif    
+#endif
 }

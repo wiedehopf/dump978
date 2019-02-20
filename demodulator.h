@@ -43,7 +43,7 @@ namespace dump978 {
     public:
         virtual void HandleSamples(std::uint64_t timestamp, const uat::Bytes &buffer) = 0;
     };
-    
+
     class SingleThreadReceiver : public Receiver {
     public:
         SingleThreadReceiver(SampleFormat format);
@@ -57,6 +57,6 @@ namespace dump978 {
     };
 
 };
-       
+
 #endif
 

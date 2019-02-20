@@ -11,11 +11,11 @@
 
 #include <boost/io/ios_state.hpp>
 
-namespace uat {    
+namespace uat {
     //
     // streaming raw messages
     //
-    
+
     std::ostream &operator<<(std::ostream &os, const RawMessage &message) {
         boost::io::ios_flags_saver ifs(os);
 
@@ -29,7 +29,7 @@ namespace uat {
             break;
         default:
             throw std::logic_error("unexpected message type");
-        }        
+        }
 
         os << std::setfill('0');
         for (auto b : message.Payload()) {
@@ -65,7 +65,7 @@ namespace uat {
         address = raw.Bits(2,1, 4,8);
 
         // Optional parts of the message
-        // DO-282B Table 2-10 "Composition of the ADS-B Payload"        
+        // DO-282B Table 2-10 "Composition of the ADS-B Payload"
         switch (payload_type) {
         case 0:
             DecodeSV(raw);
@@ -243,7 +243,7 @@ namespace uat {
                 // Lateral GPS offset
                 // We adopt the convention that left is negative
                 auto raw_gps_lat = raw.Bits(16,8, 17,2);
-                if (raw_gps_lat != 0) {                    
+                if (raw_gps_lat != 0) {
                     if (raw_gps_lat <= 3) {
                         gps_lateral_offset = raw_gps_lat * -2;
                     } else {
@@ -254,7 +254,7 @@ namespace uat {
 
             break;
         }
-            
+
         default:
             // nothing;
             break;
@@ -370,7 +370,7 @@ namespace uat {
         single_antenna = raw.Bit(28,3);
         nic_supplement = raw.Bit(28,4);
         // 28,5 .. 29,8 reserved
-        
+
     }
 
     void AdsbMessage::DecodeAUXSV(const RawMessage &raw) {
@@ -397,9 +397,9 @@ namespace uat {
             { AddressQualifier::VEHICLE, "vehicle" },
             { AddressQualifier::ADSB_ICAO, "fixed_beacon" },
             { AddressQualifier::ADSB_ICAO, "adsr_other" },
-            { AddressQualifier::RESERVED_7, "reserved_7" }            
+            { AddressQualifier::RESERVED_7, "reserved_7" }
         } );
-    
+
     NLOHMANN_JSON_SERIALIZE_ENUM( AirGroundState, {
             { AirGroundState::AIRBORNE_SUBSONIC, "airborne" },
             { AirGroundState::AIRBORNE_SUPERSONIC, "supersonic" },
@@ -426,7 +426,7 @@ namespace uat {
             { SILSupplement::PER_HOUR, "per_hour" },
             { SILSupplement::PER_SAMPLE, "per_sample" }
         } );
-    
+
     NLOHMANN_JSON_SERIALIZE_ENUM( SelectedAltitudeType, {
             { SelectedAltitudeType::MCP_FCU, "mcp_fcu" },
             { SelectedAltitudeType::FMS, "fms" }

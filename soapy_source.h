@@ -32,10 +32,10 @@ namespace dump978 {
         SoapySampleSource(SampleFormat format, const std::string &device_name);
 
         void Run();
-        
+
         SampleFormat format_;
         std::string device_name_;
-        
+
         std::shared_ptr<SoapySDR::Device> device_;
         std::shared_ptr<SoapySDR::Stream> stream_;
         std::unique_ptr<std::thread> rx_thread_;

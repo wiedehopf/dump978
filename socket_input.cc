@@ -86,10 +86,10 @@ void RawInput::ScheduleRead()
                                     HandleError(ec);
                                     return;
                                 }
-                                
+
                                 used_ += len;
                                 ParseBuffer();
-                                ScheduleRead();                                    
+                                ScheduleRead();
                             });
 }
 
@@ -106,7 +106,7 @@ void RawInput::HandleError(const boost::system::error_code &ec)
 void RawInput::ParseBuffer()
 {
     SharedMessageVector messages;
-    
+
     auto sol = readbuf_.begin();
     auto end = readbuf_.begin() + used_;
     while (sol < end) {
@@ -201,7 +201,7 @@ boost::optional<uat::RawMessage> RawInput::ParseLine(const std::string &line)
 
     unsigned rs = 0;
     double rssi = 0;
-    std::uint64_t t = 0;    
+    std::uint64_t t = 0;
 
     for (auto i = eod + 1; i < line.size(); ) {
         auto equals = line.find('=', i);

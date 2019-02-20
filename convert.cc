@@ -16,7 +16,7 @@ namespace dump978 {
         double scaled_ang = std::round(32768 * ang / M_PI);
         return scaled_ang < 0 ? 0 : scaled_ang > 65535 ? 65535 : (std::uint16_t)scaled_ang;
     }
-    
+
     SampleConverter::Pointer SampleConverter::Create(SampleFormat format) {
         switch (format) {
         case SampleFormat::CU8:
@@ -34,7 +34,7 @@ namespace dump978 {
 
     CU8Converter::CU8Converter() {
         cu8_alias u;
-        
+
         unsigned i,q;
         for (i = 0; i < 256; ++i) {
             double d_i = (i - 127.5);
@@ -49,7 +49,7 @@ namespace dump978 {
 
     void CU8Converter::Convert(const uat::Bytes &in, uat::PhaseBuffer &out) {
         const cu8_alias *in_iq = reinterpret_cast<const cu8_alias*>(in.data());
-        
+
         // unroll the loop
         const auto n = in.size() / 2;
         const auto n8 = n / 8;
@@ -73,7 +73,7 @@ namespace dump978 {
 
     CS8Converter::CS8Converter() {
         cs8_alias u;
-        
+
         int i,q;
         for (i = -128; i <= 127; ++i) {
             for (q = -128; q <= 127; ++q) {
@@ -92,7 +92,7 @@ namespace dump978 {
         const auto n8 = n / 8;
         const auto n7 = n & 7;
 
-        out.reserve(out.size() + n);        
+        out.reserve(out.size() + n);
         for (unsigned i = 0; i < n8; ++i, in_iq += 8) {
             out.push_back(lookup_[in_iq[0].iq16]);
             out.push_back(lookup_[in_iq[1].iq16]);
@@ -116,7 +116,7 @@ namespace dump978 {
         const auto n8 = n / 8;
         const auto n7 = n & 7;
 
-        out.reserve(out.size() + n);        
+        out.reserve(out.size() + n);
         for (unsigned i = 0; i < n8; ++i, in_iq += 8) {
             out.push_back(scaled_atan2(in_iq[1], in_iq[0]));
             out.push_back(scaled_atan2(in_iq[3], in_iq[2]));
@@ -140,7 +140,7 @@ namespace dump978 {
         const auto n8 = n / 8;
         const auto n7 = n & 7;
 
-        out.reserve(out.size() + n);        
+        out.reserve(out.size() + n);
         for (unsigned i = 0; i < n8; ++i, in_iq += 8) {
             out.push_back(scaled_atan2(in_iq[1], in_iq[0]));
             out.push_back(scaled_atan2(in_iq[3], in_iq[2]));

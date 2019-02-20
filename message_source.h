@@ -29,7 +29,7 @@ namespace uat {
 
     private:
         Consumer consumer_;
-    };        
-};        
+    };
+};
 
 #endif

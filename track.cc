@@ -44,7 +44,7 @@ void AircraftState::UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &
     UPDATE(nac_v);
     UPDATE(nic_baro);
     UPDATE(capability_codes);
-    UPDATE(operational_modes);        
+    UPDATE(operational_modes);
     UPDATE(sil_supplement);
     UPDATE(gva);
     UPDATE(single_antenna);

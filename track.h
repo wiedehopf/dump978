@@ -64,7 +64,7 @@ namespace uat {
 
         bool MaybeUpdate(std::uint64_t at, const T& v) {
             if (at > updated_) {
-                updated_ = at;                
+                updated_ = at;
                 if (v != v_) {
                     changed_ = at;
                 }
@@ -82,12 +82,12 @@ namespace uat {
     private:
         T v_;
     };
-    
+
     struct AircraftState {
         AddressQualifier address_qualifier;
         AdsbAddress address;
         std::uint64_t last_message_time;
-        
+
         AgedField<std::pair<double,double>> position;  // latitude, longitude
         AgedField<int> pressure_altitude;
         AgedField<int> geometric_altitude;
@@ -119,7 +119,7 @@ namespace uat {
         AgedField<unsigned> nac_v;
         AgedField<unsigned> nic_baro;
         AgedField<CapabilityCodes> capability_codes;
-        AgedField<OperationalModes> operational_modes;        
+        AgedField<OperationalModes> operational_modes;
         AgedField<SILSupplement> sil_supplement;
         AgedField<unsigned> gva;
         AgedField<bool> single_antenna;
@@ -133,7 +133,7 @@ namespace uat {
 
         void UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &message);
     };
-    
+
     class Tracker : public std::enable_shared_from_this<Tracker> {
     public:
         typedef std::pair<AddressQualifier,AdsbAddress> AddressKey;

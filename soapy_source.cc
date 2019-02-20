@@ -11,7 +11,7 @@
 
 namespace dump978 {
     std::atomic_bool SoapySampleSource::log_handler_registered_(false);
-    
+
     static void SoapyLogger(const SoapySDRLogLevel logLevel, const char *message)
     {
         static std::map<SoapySDRLogLevel,std::string> levels = {
@@ -32,7 +32,7 @@ namespace dump978 {
             level = "UNKNOWN";
         else
             level = i->second;
-        
+
         std::cerr << "SoapySDR: " << level << ": " << message << std::endl;
     }
 
@@ -91,7 +91,7 @@ namespace dump978 {
         if (stream_) {
             // rtlsdr needs the rx thread to drain data before this returns..
             device_->deactivateStream(stream_.get());
-        }            
+        }
         if (rx_thread_) {
             halt_ = true;
             rx_thread_->join();
@@ -100,7 +100,7 @@ namespace dump978 {
         if (stream_) {
             stream_.reset();
         }
-        if (device_) {      
+        if (device_) {
             device_.reset();
         }
     }
@@ -128,17 +128,17 @@ namespace dump978 {
             if (halt_) {
                 break;
             }
-            
+
             if (elements_read < 0) {
                 std::cerr << "SoapySDR reports error: " << SoapySDR::errToStr(elements_read) << std::endl;
                 auto ec = boost::system::error_code(0, boost::system::generic_category());
                 DispatchError(ec);
                 break;
             }
-            
+
             block.resize(elements_read * bytes_per_element);
 
-            // work out a starting timestamp                                    
+            // work out a starting timestamp
             static auto unix_epoch = std::chrono::system_clock::from_time_t(0);
             auto end_of_block = std::chrono::system_clock::now();
             auto start_of_block = end_of_block - (std::chrono::milliseconds(1000) * elements / 2083333);
@@ -147,5 +147,5 @@ namespace dump978 {
 
             DispatchBuffer(timestamp, block);
         }
-    }    
+    }
 };

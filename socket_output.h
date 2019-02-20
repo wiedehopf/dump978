@@ -74,7 +74,7 @@ namespace dump978 {
             : SocketOutput(service_, std::move(socket_))
         {}
     };
-        
+
     class JsonOutput : public SocketOutput {
     public:
         // factory method, this class must always be constructed via make_shared
@@ -92,7 +92,7 @@ namespace dump978 {
             : SocketOutput(service_, std::move(socket_))
         {}
     };
-        
+
     class SocketListener : public std::enable_shared_from_this<SocketListener> {
     public:
         typedef std::shared_ptr<SocketListener> Pointer;
@@ -117,10 +117,10 @@ namespace dump978 {
                        ConnectionFactory factory);
 
         void Accept();
-        
+
         boost::asio::io_service &service_;
         boost::asio::ip::tcp::acceptor acceptor_;
-        boost::asio::ip::tcp::endpoint endpoint_;    
+        boost::asio::ip::tcp::endpoint endpoint_;
         boost::asio::ip::tcp::socket socket_;
         boost::asio::ip::tcp::endpoint peer_;
         uat::MessageDispatch &dispatch_;

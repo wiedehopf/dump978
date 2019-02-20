@@ -41,7 +41,7 @@ namespace faup978 {
         void HandleMessages(uat::SharedMessageVector messages) {
             tracker_->HandleMessages(messages);
         }
-        
+
     private:
         Reporter(boost::asio::io_service &service,
                  std::chrono::milliseconds interval,

@@ -23,7 +23,7 @@ namespace uat {
         RawMessage()
             : type_(MessageType::INVALID), received_at_(0), errors_(0), rssi_(0)
         {}
-        
+
         RawMessage(const Bytes &payload,
                    std::uint64_t received_at,
                    unsigned errors,
@@ -58,7 +58,7 @@ namespace uat {
               errors_(errors),
               rssi_(rssi)
         {
-            switch (payload_.size()) { 
+            switch (payload_.size()) {
             case DOWNLINK_SHORT_DATA_BYTES:
                 type_ = MessageType::DOWNLINK_SHORT;
                 break;
@@ -121,7 +121,7 @@ namespace uat {
             const unsigned bi = (byte-1) * 8 + bit - 1;
             const unsigned by = bi >> 3;
             const unsigned mask = 1 << (7 - (bi & 7));
-        
+
             return (payload_.at(by) & mask) != 0;
         }
 
@@ -303,7 +303,7 @@ namespace uat {
     };
 
     typedef std::uint32_t AdsbAddress;
-    
+
     struct AdsbMessage {
         AdsbMessage(const RawMessage &raw);
 
@@ -313,7 +313,7 @@ namespace uat {
         AdsbAddress address;
 
         // 2.2.4.5.2 STATE VECTOR Element (ADS-B)
-        // 2.2.4.5.3 STATE VECTOR Element (TIS-B/ADS-B)        
+        // 2.2.4.5.3 STATE VECTOR Element (TIS-B/ADS-B)
         boost::optional<std::pair<double,double>> position; // latitude, longitude
         boost::optional<int> pressure_altitude;
         boost::optional<int> geometric_altitude;
@@ -349,7 +349,7 @@ namespace uat {
         boost::optional<unsigned> nac_v;
         boost::optional<unsigned> nic_baro;
         boost::optional<CapabilityCodes> capability_codes;
-        boost::optional<OperationalModes> operational_modes;        
+        boost::optional<OperationalModes> operational_modes;
         boost::optional<SILSupplement> sil_supplement;
         boost::optional<unsigned> gva;
         boost::optional<bool> single_antenna;
