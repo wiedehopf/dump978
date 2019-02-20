@@ -12,9 +12,10 @@
 #include "socket_input.h"
 #include "message_source.h"
 #include "uat_message.h"
-#include "track.h"
+#include "faup978_reporter.h"
 
 using namespace uat;
+using namespace faup978;
 
 namespace po = boost::program_options;
 using boost::asio::ip::tcp;
@@ -75,28 +76,17 @@ static int realmain(int argc, char **argv)
 
     auto connect = opts["connect"].as<connect_option>();
     auto input = RawInput::Create(io_service, connect.host, connect.port);
-    auto tracker = Tracker::Create(io_service);
+    auto reporter = Reporter::Create(io_service);
 
-    input->SetConsumer([tracker](SharedMessageVector messages) {
-            /*
-            for (const auto &message : *messages) {
-                std::cout << message << std::endl;
-                if (message.Type() == MessageType::DOWNLINK_SHORT || message.Type() == MessageType::DOWNLINK_LONG) {
-                    std::cout << AdsbMessage(message).ToJson() << std::endl;
-                }
-            }
-            */
-            tracker->HandleMessages(messages);
-            std::cout << "tracking " << tracker->Aircraft().size() << " aircraft" << std::endl;
-        });
+    input->SetConsumer(std::bind(&Reporter::HandleMessages, reporter, std::placeholders::_1));
 
-    tracker->Start();
+    reporter->Start();
     input->Start();
 
     io_service.run();
 
     input->Stop();
-    tracker->Stop();
+    reporter->Stop();
     return 0;
 }
 
