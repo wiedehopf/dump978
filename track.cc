@@ -56,6 +56,40 @@ void AircraftState::UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &
     UPDATE(selected_heading);
     UPDATE(mode_indicators);
 
+    // derive horizontal containment radius
+    if (message.nic) {
+        static std::map<unsigned,double> rc_lookup = {
+            /* 0 - unknown */
+            { 1, 37040 },
+            { 2, 14816 },
+            { 3, 7408 },
+            { 4, 3704 },
+            { 5, 1852 },
+            /* 6 - special case */
+            { 7, 370.4 },
+            { 8, 185.2 },
+            { 9, 75 },
+            { 10, 25 },
+            { 11, 7.5 }
+            /* 12..15 - reserved */
+        };
+
+        double rc = 0;
+        if (*message.nic == 6) {
+            if (nic_supplement.Valid() && nic_supplement.Value()) {
+                rc = 555.6;
+            } else {
+                rc = 1111.2;
+            }
+        } else {
+            auto i = rc_lookup.find(*message.nic);
+            if (i != rc_lookup.end())
+                rc = i->second;
+        }
+
+        horizontal_containment.MaybeUpdate(at, rc);
+    }
+
     last_message_time = std::max(last_message_time, at);
 
 #undef UPDATE

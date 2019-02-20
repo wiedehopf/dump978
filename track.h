@@ -125,6 +125,9 @@ namespace uat {
         AgedField<bool> single_antenna;
         AgedField<bool> nic_supplement;
 
+        // derived from nic, nic_supplement
+        AgedField<double> horizontal_containment;  // upper bound, meters
+
         AgedField<SelectedAltitudeType> selected_altitude_type;
         AgedField<int> selected_altitude;
         AgedField<double> barometric_pressure_setting;

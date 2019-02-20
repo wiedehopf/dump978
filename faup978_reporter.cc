@@ -208,10 +208,12 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
     add_aged_field("alt",      aircraft.pressure_altitude, simple_emit(aircraft.pressure_altitude));
     add_aged_field("position", aircraft.position,          [&aircraft](std::ostream &os) {
             auto &p = aircraft.position.Value();
+            unsigned nic = aircraft.nic.Valid() ? aircraft.nic.Value() : 0; // should always be valid if the position is
+            double rc = aircraft.horizontal_containment.Valid() ? aircraft.horizontal_containment.Value() : 0;
             os << '{'
                << std::fixed << std::setprecision(5) << p.first << ' ' << p.second
-               << ' ' << aircraft.nic.Value()
-               << ' ' << 0 // TODO: Rc
+               << ' ' << nic
+               << ' ' << std::setprecision(0) << std::ceil(rc)
                << '}';
         });
     add_aged_field("alt_gnss", aircraft.geometric_altitude, simple_emit(aircraft.geometric_altitude));
