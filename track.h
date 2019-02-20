@@ -86,8 +86,8 @@ namespace uat {
         AgedField<AirGroundState> airground_state;
         AgedField<int> north_velocity;
         AgedField<int> east_velocity;
-        AgedField<VerticalVelocitySource> vv_src;
-        AgedField<int> vertical_velocity;
+        AgedField<int> vertical_velocity_barometric;
+        AgedField<int> vertical_velocity_geometric;
         AgedField<int> ground_speed;
         AgedField<double> magnetic_heading;
         AgedField<double> true_heading;

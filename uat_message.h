@@ -322,7 +322,8 @@ namespace uat {
         boost::optional<int> north_velocity;
         boost::optional<int> east_velocity;
         boost::optional<VerticalVelocitySource> vv_src;
-        boost::optional<int> vertical_velocity;
+        boost::optional<int> vertical_velocity_barometric;
+        boost::optional<int> vertical_velocity_geometric;
         boost::optional<int> ground_speed;
         boost::optional<double> magnetic_heading;
         boost::optional<double> true_heading;

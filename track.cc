@@ -20,8 +20,8 @@ void AircraftState::UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &
     UPDATE(airground_state);
     UPDATE(north_velocity);
     UPDATE(east_velocity);
-    UPDATE(vv_src);
-    UPDATE(vertical_velocity);
+    UPDATE(vertical_velocity_barometric);
+    UPDATE(vertical_velocity_geometric);
     UPDATE(ground_speed);
     UPDATE(magnetic_heading);
     UPDATE(true_heading);

@@ -166,8 +166,17 @@ namespace uat {
             vv_src = static_cast<VerticalVelocitySource>(raw.Bits(16,2, 16,2));
             int vv_sign = raw.Bit(16,3) ? -1 : 1;
             auto raw_vv = raw.Bits(16,4, 17,4);
-            if (raw_vv != 0)
-                vertical_velocity = vv_sign * (raw_vv - 1) * 64;
+            if (raw_vv != 0) {
+                auto vertical_velocity = vv_sign * (raw_vv - 1) * 64;
+                switch (vv_src.get()) {
+                case VerticalVelocitySource::BAROMETRIC:
+                    vertical_velocity_barometric = vertical_velocity;
+                    break;
+                case VerticalVelocitySource::GEOMETRIC:
+                    vertical_velocity_geometric = vertical_velocity;
+                    break;
+                }
+            }
 
             break;
         }
@@ -444,7 +453,8 @@ namespace uat {
         EMIT(north_velocity);
         EMIT(east_velocity);
         EMIT(vv_src);
-        EMIT(vertical_velocity);
+        EMIT(vertical_velocity_barometric);
+        EMIT(vertical_velocity_geometric);
         EMIT(ground_speed);
         EMIT(magnetic_heading);
         EMIT(true_heading);
