@@ -95,9 +95,20 @@ void Tracker::PurgeOld()
 
 void Tracker::HandleMessages(SharedMessageVector messages)
 {
+    static auto unix_epoch = std::chrono::system_clock::from_time_t(0);
+    const std::uint64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - unix_epoch).count();
+
     auto self(shared_from_this());
-    strand_.dispatch([this,self,messages]() {
+    strand_.dispatch([this,self,now,messages]() {
+            const std::uint64_t PAST_FUZZ = 15000;
+            const std::uint64_t FUTURE_FUZZ = 1000;
+
             for (const auto &message : *messages) {
+                // validate message time vs system clock so we are only processing contemporaneous messages
+                if (message.ReceivedAt() == 0 || message.ReceivedAt() < (now - PAST_FUZZ) || message.ReceivedAt() > (now + FUTURE_FUZZ)) {
+                    std::cerr << "DISCARD " << message.ReceivedAt() << std::endl;
+                    continue;
+                }
                 if (message.Type() == MessageType::DOWNLINK_SHORT || message.Type() == MessageType::DOWNLINK_LONG) {
                     HandleMessage(message.ReceivedAt(), AdsbMessage(message));
                 }
