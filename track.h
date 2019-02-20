@@ -20,6 +20,10 @@ namespace uat {
     class AgedFieldBase {
     public:
         operator bool() const {
+            return Valid();
+        }
+
+        bool Valid() const {
             return (updated_ != 0);
         }
 
