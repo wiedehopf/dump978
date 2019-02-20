@@ -77,17 +77,13 @@ void Tracker::PurgeOld()
     auto expires = std::chrono::system_clock::now() - timeout_;
     std::uint64_t expires_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(expires - unix_epoch).count();
 
-    std::cerr << "starting to expiry across " << aircraft_.size() << " aircraft, expiry time " << expires_timestamp << std::endl;
     for (auto i = aircraft_.begin(); i != aircraft_.end(); ) {
         if (i->second.last_message_time < expires_timestamp) {
-            std::cerr << "expire " << std::hex << std::setfill('0') << std::setw(6) << i->second.address << std::dec << std::setfill(' ') << " with last time " << i->second.last_message_time << std::endl;            
             i = aircraft_.erase(i);
         } else {
             ++i;
         }
     }
-    std::cerr << "done expiring, now have " << aircraft_.size() << " aircraft" << std::endl;
-
     auto self(shared_from_this());
     timer_.expires_from_now(timeout_ / 4);
     timer_.async_wait(strand_.wrap([this,self](const boost::system::error_code &ec) {
@@ -114,7 +110,6 @@ void Tracker::HandleMessage(std::uint64_t at, const uat::AdsbMessage &message)
     AddressKey key { message.address_qualifier, message.address };
     auto i = aircraft_.find(key);
     if (i == aircraft_.end()) {
-        std::cerr << "new aircraft: " << (int)message.address_qualifier << "/" << std::hex << std::setfill('0') << std::setw(6) << message.address << std::dec << std::setfill(' ') << std::endl;
         aircraft_[key] = { message.address_qualifier, message.address };
     }
 
