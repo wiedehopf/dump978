@@ -17,12 +17,8 @@
 #include "uat_message.h"
 
 namespace uat {
-    template <class T>
-    class AgedField {
+    class AgedFieldBase {
     public:
-        AgedField() : v_() {}
-        AgedField(const T& v) : v_(v) {}
-
         operator bool() const {
             return (updated_ != 0);
         }
@@ -51,6 +47,17 @@ namespace uat {
             }
         }
 
+    protected:
+        std::uint64_t updated_ = 0;
+        std::uint64_t changed_ = 0;
+    };
+
+    template <class T>
+    class AgedField : public AgedFieldBase {
+    public:
+        AgedField() : v_() {}
+        AgedField(const T& v) : v_(v) {}
+
         bool MaybeUpdate(std::uint64_t at, const T& v) {
             if (at > updated_) {
                 updated_ = at;                
@@ -70,8 +77,6 @@ namespace uat {
 
     private:
         T v_;
-        std::uint64_t updated_ = 0;
-        std::uint64_t changed_ = 0;
     };
     
     struct AircraftState {
