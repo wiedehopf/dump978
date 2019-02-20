@@ -31,7 +31,7 @@ namespace uat {
             return updated_;
         }
 
-        std::uint64_t ChangeAge(std::uint64_t at) {
+        std::uint64_t ChangeAge(std::uint64_t at) const {
             if (at < changed_) {
                 return 0;
             } else {
@@ -39,7 +39,7 @@ namespace uat {
             }
         }
 
-        std::uint64_t UpdateAge(std::uint64_t at) {
+        std::uint64_t UpdateAge(std::uint64_t at) const {
             if (at < updated_) {
                 return 0;
             } else {
@@ -71,7 +71,7 @@ namespace uat {
             }
         }
 
-        T Value() {
+        const T &Value() const {
             return v_;
         }
 
