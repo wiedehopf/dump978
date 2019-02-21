@@ -357,7 +357,7 @@ namespace dump978 {
             return boost::none;
         }
 
-        auto bits = (raw.size() == DOWNLINK_LONG_BYTES ? DOWNLINK_LONG_BITS : DOWNLINK_SHORT_BITS);
+        auto bits = (corrected.size() == DOWNLINK_LONG_DATA_BYTES ? DOWNLINK_LONG_BITS : DOWNLINK_SHORT_BITS);
         return Demodulator::Message{std::move(corrected), errors, start, start + (SYNC_BITS + bits) * 2};
     }
 
