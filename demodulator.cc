@@ -148,6 +148,7 @@ namespace dump978 {
         return 0;
     }
 
+#ifdef AUTO_CENTER
     // check that there is a valid sync word starting at 'phase'
     // that matches the sync word 'pattern'. Return a pair:
     // first element is true if the sync word looks OK; second
@@ -195,36 +196,59 @@ namespace dump978 {
 
         return {(error_bits <= MAX_SYNC_ERRORS), center};
     }
+#endif
 
     // demodulate 'bytes' bytes from samples at 'phase' using 'center' as the bit
     // slicing threshold
-    static inline Bytes DemodBits(PhaseBuffer::const_iterator phase, unsigned bytes, std::int16_t center) {
-        Bytes result;
+    static inline std::pair<Bytes,std::vector<std::size_t>> DemodBits(PhaseBuffer::const_iterator phase, unsigned bytes, std::int16_t zero_slice, std::int16_t one_slice) {
+        std::pair<Bytes,std::vector<std::size_t>> result_pair;
+        auto &result = result_pair.first;
+        auto &erasures = result_pair.second;
+
         result.reserve(bytes);
 
         for (unsigned i = 0; i < bytes; ++i) {
             std::uint8_t b = 0;
-            if (PhaseDifference(phase[0], phase[1]) > center)
+            bool erasure = false;
+            if (PhaseDifference(phase[0], phase[1]) > one_slice)
                 b |= 0x80;
-            if (PhaseDifference(phase[2], phase[3]) > center)
+            else if (PhaseDifference(phase[0], phase[1]) > zero_slice)
+                erasure = true;
+            if (PhaseDifference(phase[2], phase[3]) > one_slice)
                 b |= 0x40;
-            if (PhaseDifference(phase[4], phase[5]) > center)
+            else if (PhaseDifference(phase[2], phase[3]) > zero_slice)
+                erasure = true;
+            if (PhaseDifference(phase[4], phase[5]) > one_slice)
                 b |= 0x20;
-            if (PhaseDifference(phase[6], phase[7]) > center)
+            else if (PhaseDifference(phase[4], phase[5]) > zero_slice)
+                erasure = true;
+            if (PhaseDifference(phase[6], phase[7]) > one_slice)
                 b |= 0x10;
-            if (PhaseDifference(phase[8], phase[9]) > center)
+            else if (PhaseDifference(phase[6], phase[7]) > zero_slice)
+                erasure = true;
+            if (PhaseDifference(phase[8], phase[9]) > one_slice)
                 b |= 0x08;
-            if (PhaseDifference(phase[10], phase[11]) > center)
+            else if (PhaseDifference(phase[8], phase[9]) > zero_slice)
+                erasure = true;
+            if (PhaseDifference(phase[10], phase[11]) > one_slice)
                 b |= 0x04;
-            if (PhaseDifference(phase[12], phase[13]) > center)
+            else if (PhaseDifference(phase[10], phase[11]) > zero_slice)
+                erasure = true;
+            if (PhaseDifference(phase[12], phase[13]) > one_slice)
                 b |= 0x02;
-            if (PhaseDifference(phase[14], phase[15]) > center)
+            else if (PhaseDifference(phase[12], phase[13]) > zero_slice)
+                erasure = true;
+            if (PhaseDifference(phase[14], phase[15]) > one_slice)
                 b |= 0x01;
+            else if (PhaseDifference(phase[14], phase[15]) > zero_slice)
+                erasure = true;
             result.push_back(b);
+            if (erasure)
+                erasures.push_back(i);
             phase += 16;
         }
 
-        return result;
+        return result_pair;
     }
 
     unsigned TwoMegDemodulator::NumTrailingSamples() { return (SYNC_BITS + UPLINK_BITS) * 2; }
@@ -340,18 +364,24 @@ namespace dump978 {
     }
 
     boost::optional<Demodulator::Message> TwoMegDemodulator::DemodOneDownlink(PhaseBuffer::const_iterator start) {
+#ifdef AUTO_CENTER
         auto sync = CheckSyncWord(start, DOWNLINK_SYNC_WORD);
         if (!sync.first) {
             // Sync word had errors
             return boost::none;
         }
 
-        Bytes raw = DemodBits(start + SYNC_BITS * 2, DOWNLINK_LONG_BYTES, sync.second);
+        auto result = DemodBits(start + SYNC_BITS * 2, DOWNLINK_LONG_BYTES, sync.second - 750, sync.second + 750);
+#else
+        auto result = DemodBits(start + SYNC_BITS * 2, DOWNLINK_LONG_BYTES, -750, 750);
+#endif
+        auto &raw = result.first;
+        auto &erasures = result.second;
 
         bool success;
         uat::Bytes corrected;
         unsigned errors;
-        std::tie(success, corrected, errors) = fec_.CorrectDownlink(raw);
+        std::tie(success, corrected, errors) = fec_.CorrectDownlink(raw, erasures);
         if (!success) {
             // Error correction failed
             return boost::none;
@@ -362,18 +392,24 @@ namespace dump978 {
     }
 
     boost::optional<Demodulator::Message> TwoMegDemodulator::DemodOneUplink(PhaseBuffer::const_iterator start) {
+#ifdef AUTO_CENTER
         auto sync = CheckSyncWord(start, UPLINK_SYNC_WORD);
         if (!sync.first) {
             // Sync word had errors
             return boost::none;
         }
 
-        Bytes raw = DemodBits(start + SYNC_BITS * 2, UPLINK_BYTES, sync.second);
+        auto result = DemodBits(start + SYNC_BITS * 2, UPLINK_BYTES, sync.second - 750, sync.second + 750);
+#else
+        auto result = DemodBits(start + SYNC_BITS * 2, UPLINK_BYTES, -750, 750);
+#endif
+        auto &raw = result.first;
+        auto &erasures = result.second;
 
         bool success;
         uat::Bytes corrected;
         unsigned errors;
-        std::tie(success, corrected, errors) = fec_.CorrectUplink(raw);
+        std::tie(success, corrected, errors) = fec_.CorrectUplink(raw, erasures);
 
         if (!success) {
             // Error correction failed
