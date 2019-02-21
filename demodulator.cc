@@ -151,7 +151,7 @@ namespace dump978 {
             }
         }
 
-        return std::make_pair<>((error_bits <= MAX_SYNC_ERRORS), center);
+        return { (error_bits <= MAX_SYNC_ERRORS), center };
     }
 
     // demodulate 'bytes' bytes from samples at 'start' using 'center' as the bit slicing threshold
