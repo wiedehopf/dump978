@@ -9,11 +9,13 @@ extern "C" {
 #include "fec/rs.h"
 }
 
+using namespace uat::fec;
+
 uat::FEC::FEC(void)
 {
-    rs_downlink_short_ = ::init_rs_char(8, /* gfpoly */ DOWNLINK_POLY, /* fcr */ 120, /* prim */ 1, /* nroots */ 12, /* pad */ 225);
-    rs_downlink_long_ = ::init_rs_char(8, /* gfpoly */ DOWNLINK_POLY, /* fcr */ 120, /* prim */ 1, /* nroots */ 14, /* pad */ 207);
-    rs_uplink_ = ::init_rs_char(8, /* gfpoly */ UPLINK_POLY, /* fcr */ 120, /* prim */ 1, /* nroots */ 20, /* pad */ 163);
+    rs_downlink_short_ = ::init_rs_char(/* symsize */ 8, /* gfpoly */ DOWNLINK_SHORT_POLY, /* fcr */ 120, /* prim */ 1, /* nroots */ DOWNLINK_SHORT_ROOTS, /* pad */ DOWNLINK_SHORT_PAD);
+    rs_downlink_long_ = ::init_rs_char(/* symsize */ 8, /* gfpoly */ DOWNLINK_LONG_POLY, /* fcr */ 120, /* prim */ 1, /* nroots */ DOWNLINK_LONG_ROOTS, /* pad */ DOWNLINK_LONG_PAD);
+    rs_uplink_ = ::init_rs_char(/* symsize */ 8, /* gfpoly */ UPLINK_BLOCK_POLY, /* fcr */ 120, /* prim */ 1, /* nroots */ UPLINK_BLOCK_ROOTS, /* pad */ UPLINK_BLOCK_PAD);
 }
 
 uat::FEC::~FEC(void)
@@ -23,7 +25,7 @@ uat::FEC::~FEC(void)
     ::free_rs_char(rs_uplink_);
 }
 
-std::tuple<bool,uat::Bytes,unsigned> uat::FEC::CorrectDownlink(const Bytes &raw)
+std::tuple<bool,uat::Bytes,unsigned> uat::FEC::CorrectDownlink(const Bytes &raw, const std::vector<std::size_t> &erasures)
 {
     using R = std::tuple<bool,uat::Bytes,unsigned>;
 
@@ -31,12 +33,21 @@ std::tuple<bool,uat::Bytes,unsigned> uat::FEC::CorrectDownlink(const Bytes &raw)
         return R { false, {}, 0 };
     }
 
+    if (erasures.size() > DOWNLINK_LONG_ROOTS) {
+        // too many
+        return R { false, {}, 0 };
+    }
+
     // Try decoding as a Long UAT.
     Bytes corrected;
     std::copy(raw.begin(), raw.end(), std::back_inserter(corrected));
 
-    int n_corrected = ::decode_rs_char(rs_downlink_long_, corrected.data(), NULL, 0);
-    if (n_corrected >= 0 && n_corrected <= 7 && (corrected[0]>>3) != 0) {
+    int erasures_array[DOWNLINK_LONG_ROOTS];
+    for (std::size_t i = 0; i < erasures.size(); ++i) {
+        erasures_array[i] = erasures[i] + DOWNLINK_LONG_PAD;
+    }
+    int n_corrected = ::decode_rs_char(rs_downlink_long_, corrected.data(), erasures_array, erasures.size());
+    if (n_corrected >= 0 && n_corrected <= DOWNLINK_LONG_ROOTS && (corrected[0]>>3) != 0) {
         // Valid long frame.
         corrected.resize(DOWNLINK_LONG_DATA_BYTES);
         return R { true, std::move(corrected), n_corrected };
@@ -45,8 +56,25 @@ std::tuple<bool,uat::Bytes,unsigned> uat::FEC::CorrectDownlink(const Bytes &raw)
     // Retry as Basic UAT
     // We rely on decode_rs_char not modifying the data if there were
     // uncorrectable errors in the previous step.
-    n_corrected = ::decode_rs_char(rs_downlink_short_, corrected.data(), NULL, 0);
-    if (n_corrected >= 0 && n_corrected <= 6 && (corrected[0]>>3) == 0) {
+
+    // Only pass in erasures that lie within the short message length
+    int short_erasures = 0;
+    for (auto e : erasures) {
+        if (e < DOWNLINK_SHORT_BYTES) {
+            if (short_erasures < DOWNLINK_SHORT_ROOTS) {
+                erasures_array[short_erasures] = e + DOWNLINK_SHORT_PAD;
+            }
+            ++short_erasures;
+        }
+    }
+
+    if (short_erasures > DOWNLINK_SHORT_ROOTS) {
+        // too many
+        return R { false, {}, 0 };
+    }
+
+    n_corrected = ::decode_rs_char(rs_downlink_short_, corrected.data(), erasures_array, short_erasures);
+    if (n_corrected >= 0 && n_corrected <= DOWNLINK_SHORT_ROOTS && (corrected[0]>>3) == 0) {
         // Valid short frame
         corrected.resize(DOWNLINK_SHORT_DATA_BYTES);
         return R { true, std::move(corrected), n_corrected };
@@ -56,7 +84,7 @@ std::tuple<bool,uat::Bytes,unsigned> uat::FEC::CorrectDownlink(const Bytes &raw)
     return R { false, {}, 0 };
 }
 
-std::tuple<bool,uat::Bytes,unsigned> uat::FEC::CorrectUplink(const Bytes &raw)
+std::tuple<bool,uat::Bytes,unsigned> uat::FEC::CorrectUplink(const Bytes &raw, const std::vector<std::size_t> &erasures)
 {
     using R = std::tuple<bool,uat::Bytes,unsigned>;
 
@@ -80,9 +108,25 @@ std::tuple<bool,uat::Bytes,unsigned> uat::FEC::CorrectUplink(const Bytes &raw)
             blockdata[i] = raw[i * UPLINK_BLOCKS_PER_FRAME + block];
         }
 
+        // build erasures for this block
+        int block_erasures[UPLINK_BLOCK_ROOTS];
+        int num_erasures = 0;
+        for (auto index : erasures) {
+            if (index % UPLINK_BLOCKS_PER_FRAME == block) {
+                if (num_erasures < UPLINK_BLOCK_ROOTS)
+                    block_erasures[num_erasures] = index / UPLINK_BLOCKS_PER_FRAME + UPLINK_BLOCK_PAD;
+                num_erasures++;
+            }
+        }
+
+        // too many erasures in this block?
+        if (num_erasures > UPLINK_BLOCK_ROOTS) {
+            return R { false, {}, 0 };
+        }
+
         // error-correct
-        int n_corrected = ::decode_rs_char(rs_uplink_, blockdata.data(), NULL, 0);
-        if (n_corrected < 0 || n_corrected > 10) {
+        int n_corrected = ::decode_rs_char(rs_uplink_, blockdata.data(), block_erasures, num_erasures);
+        if (n_corrected < 0 || n_corrected > UPLINK_BLOCK_ROOTS) {
             // Failed
             return R { false, {}, 0 };
         }

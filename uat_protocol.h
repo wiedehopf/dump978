@@ -40,8 +40,19 @@ namespace uat {
     const unsigned UPLINK_BITS = UPLINK_BLOCK_BITS * UPLINK_BLOCKS_PER_FRAME;
     const unsigned UPLINK_BYTES = UPLINK_BITS / 8;
 
-    const unsigned UPLINK_POLY = 0x187;
-    const unsigned DOWNLINK_POLY = 0x187;
+    // FEC parameters
+    namespace fec {
+        const unsigned DOWNLINK_SHORT_POLY = 0x187;
+        const unsigned DOWNLINK_LONG_POLY = 0x187;
+        const unsigned UPLINK_BLOCK_POLY = 0x187;
+
+        const int DOWNLINK_SHORT_ROOTS = 12;
+        const int DOWNLINK_LONG_ROOTS = 14;
+        const int UPLINK_BLOCK_ROOTS = 20;
+        const int DOWNLINK_SHORT_PAD = 255 - DOWNLINK_SHORT_BYTES;
+        const int DOWNLINK_LONG_PAD = 255 - DOWNLINK_LONG_BYTES;
+        const int UPLINK_BLOCK_PAD = 255 - UPLINK_BLOCK_BYTES;
+    };
 };
 
 #endif
