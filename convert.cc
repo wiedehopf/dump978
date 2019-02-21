@@ -56,7 +56,7 @@ namespace dump978 {
         const auto n8 = n / 8;
         const auto n7 = n & 7;
 
-        for (unsigned i = 0; i < n8; ++i, in_iq += 8) {
+        for (auto i = 0; i < n8; ++i, in_iq += 8) {
             *out++ = lookup_phase_[in_iq[0].iq16];
             *out++ = lookup_phase_[in_iq[1].iq16];
             *out++ = lookup_phase_[in_iq[2].iq16];
@@ -66,7 +66,7 @@ namespace dump978 {
             *out++ = lookup_phase_[in_iq[6].iq16];
             *out++ = lookup_phase_[in_iq[7].iq16];
         }
-        for (unsigned i = 0; i < n7; ++i, ++in_iq) {
+        for (auto i = 0; i < n7; ++i, ++in_iq) {
             *out++ = lookup_phase_[in_iq[0].iq16];
         }
     }
@@ -79,7 +79,7 @@ namespace dump978 {
         const auto n8 = n / 8;
         const auto n7 = n & 7;
 
-        for (unsigned i = 0; i < n8; ++i, in_iq += 8) {
+        for (auto i = 0; i < n8; ++i, in_iq += 8) {
             *out++ = lookup_magsq_[in_iq[0].iq16];
             *out++ = lookup_magsq_[in_iq[1].iq16];
             *out++ = lookup_magsq_[in_iq[2].iq16];
@@ -89,7 +89,7 @@ namespace dump978 {
             *out++ = lookup_magsq_[in_iq[6].iq16];
             *out++ = lookup_magsq_[in_iq[7].iq16];
         }
-        for (unsigned i = 0; i < n7; ++i, ++in_iq) {
+        for (auto i = 0; i < n7; ++i, ++in_iq) {
             *out++ = lookup_magsq_[in_iq[0].iq16];
         }
     }
@@ -118,7 +118,7 @@ namespace dump978 {
         const auto n8 = n / 8;
         const auto n7 = n & 7;
 
-        for (unsigned i = 0; i < n8; ++i, in_iq += 8) {
+        for (auto i = 0; i < n8; ++i, in_iq += 8) {
             *out++ = lookup_phase_[in_iq[0].iq16];
             *out++ = lookup_phase_[in_iq[1].iq16];
             *out++ = lookup_phase_[in_iq[2].iq16];
@@ -128,7 +128,7 @@ namespace dump978 {
             *out++ = lookup_phase_[in_iq[6].iq16];
             *out++ = lookup_phase_[in_iq[7].iq16];
         }
-        for (unsigned i = 0; i < n7; ++i, ++in_iq) {
+        for (auto i = 0; i < n7; ++i, ++in_iq) {
             *out++ = lookup_phase_[in_iq[0].iq16];
         }
     }
@@ -141,7 +141,7 @@ namespace dump978 {
         const auto n8 = n / 8;
         const auto n7 = n & 7;
 
-        for (unsigned i = 0; i < n8; ++i, in_iq += 8) {
+        for (auto i = 0; i < n8; ++i, in_iq += 8) {
             *out++ = lookup_magsq_[in_iq[0].iq16];
             *out++ = lookup_magsq_[in_iq[1].iq16];
             *out++ = lookup_magsq_[in_iq[2].iq16];
@@ -151,7 +151,7 @@ namespace dump978 {
             *out++ = lookup_magsq_[in_iq[6].iq16];
             *out++ = lookup_magsq_[in_iq[7].iq16];
         }
-        for (unsigned i = 0; i < n7; ++i, ++in_iq) {
+        for (auto i = 0; i < n7; ++i, ++in_iq) {
             *out++ = lookup_magsq_[in_iq[0].iq16];
         }
     }
@@ -164,7 +164,7 @@ namespace dump978 {
         const auto n8 = n / 8;
         const auto n7 = n & 7;
 
-        for (unsigned i = 0; i < n8; ++i, in_iq += 8) {
+        for (auto i = 0; i < n8; ++i, in_iq += 8) {
             *out++ = scaled_atan2(in_iq[1], in_iq[0]);
             *out++ = scaled_atan2(in_iq[3], in_iq[2]);
             *out++ = scaled_atan2(in_iq[5], in_iq[4]);
@@ -174,7 +174,7 @@ namespace dump978 {
             *out++ = scaled_atan2(in_iq[13], in_iq[12]);
             *out++ = scaled_atan2(in_iq[15], in_iq[14]);
         }
-        for (unsigned i = 0; i < n7; ++i, ++in_iq) {
+        for (auto i = 0; i < n7; ++i, ++in_iq) {
             *out++ = scaled_atan2(in_iq[1], in_iq[0]);
         }
     }
@@ -187,7 +187,7 @@ namespace dump978 {
         const auto n8 = n / 8;
         const auto n7 = n & 7;
 
-        for (unsigned i = 0; i < n8; ++i, in_iq += 8) {
+        for (auto i = 0; i < n8; ++i, in_iq += 8) {
             *out++ = magsq(in_iq[1], in_iq[0]) / 32768.0 / 32768.0;
             *out++ = magsq(in_iq[3], in_iq[2]) / 32768.0 / 32768.0;
             *out++ = magsq(in_iq[5], in_iq[4]) / 32768.0 / 32768.0;
@@ -197,7 +197,7 @@ namespace dump978 {
             *out++ = magsq(in_iq[13], in_iq[12]) / 32768.0 / 32768.0;
             *out++ = magsq(in_iq[15], in_iq[14]) / 32768.0 / 32768.0;
         }
-        for (unsigned i = 0; i < n7; ++i, ++in_iq) {
+        for (auto i = 0; i < n7; ++i, ++in_iq) {
             *out++ = magsq(in_iq[1], in_iq[0]) / 32768.0 / 32768.0;
         }
     }
@@ -210,7 +210,7 @@ namespace dump978 {
         const auto n8 = n / 8;
         const auto n7 = n & 7;
 
-        for (unsigned i = 0; i < n8; ++i, in_iq += 8) {
+        for (auto i = 0; i < n8; ++i, in_iq += 8) {
             *out++ = scaled_atan2(in_iq[1], in_iq[0]);
             *out++ = scaled_atan2(in_iq[3], in_iq[2]);
             *out++ = scaled_atan2(in_iq[5], in_iq[4]);
@@ -220,7 +220,7 @@ namespace dump978 {
             *out++ = scaled_atan2(in_iq[13], in_iq[12]);
             *out++ = scaled_atan2(in_iq[15], in_iq[14]);
         }
-        for (unsigned i = 0; i < n7; ++i, ++in_iq) {
+        for (auto i = 0; i < n7; ++i, ++in_iq) {
             *out++ = scaled_atan2(in_iq[1], in_iq[0]);
         }
     }
@@ -233,7 +233,7 @@ namespace dump978 {
         const auto n8 = n / 8;
         const auto n7 = n & 7;
 
-        for (unsigned i = 0; i < n8; ++i, in_iq += 8) {
+        for (auto i = 0; i < n8; ++i, in_iq += 8) {
             *out++ = magsq(in_iq[1], in_iq[0]);
             *out++ = magsq(in_iq[3], in_iq[2]);
             *out++ = magsq(in_iq[5], in_iq[4]);
@@ -243,7 +243,7 @@ namespace dump978 {
             *out++ = magsq(in_iq[13], in_iq[12]);
             *out++ = magsq(in_iq[15], in_iq[14]);
         }
-        for (unsigned i = 0; i < n7; ++i, ++in_iq) {
+        for (auto i = 0; i < n7; ++i, ++in_iq) {
             *out++ = magsq(in_iq[15], in_iq[14]);
         }
     }
