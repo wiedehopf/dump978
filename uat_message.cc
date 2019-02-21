@@ -41,7 +41,7 @@ namespace uat {
             os << "rs=" << std::dec << std::setw(0) << message.Errors() << ';';
         }
         if (message.Rssi() != 0) {
-            os << "rssi=" << std::dec << std::setprecision(1) << message.Rssi() << ';';
+            os << "rssi=" << std::dec << std::setprecision(1) << std::fixed << message.Rssi() << ';';
         }
         if (message.ReceivedAt() != 0) {
             os << "t=" << std::dec << std::setw(0) << (message.ReceivedAt() / 1000) << '.'
