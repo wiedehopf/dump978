@@ -371,9 +371,9 @@ namespace dump978 {
             return boost::none;
         }
 
-        auto result = DemodBits(start + SYNC_BITS * 2, DOWNLINK_LONG_BYTES, sync.second - 750, sync.second + 750);
+        auto result = DemodBits(start + SYNC_BITS * 2, DOWNLINK_LONG_BYTES, sync.second, sync.second);
 #else
-        auto result = DemodBits(start + SYNC_BITS * 2, DOWNLINK_LONG_BYTES, -750, 750);
+        auto result = DemodBits(start + SYNC_BITS * 2, DOWNLINK_LONG_BYTES, 0, 0);
 #endif
         auto &raw = result.first;
         auto &erasures = result.second;
@@ -399,9 +399,9 @@ namespace dump978 {
             return boost::none;
         }
 
-        auto result = DemodBits(start + SYNC_BITS * 2, UPLINK_BYTES, sync.second - 750, sync.second + 750);
+        auto result = DemodBits(start + SYNC_BITS * 2, UPLINK_BYTES, sync.second, sync.second);
 #else
-        auto result = DemodBits(start + SYNC_BITS * 2, UPLINK_BYTES, -750, 750);
+        auto result = DemodBits(start + SYNC_BITS * 2, UPLINK_BYTES, 0, 0);
 #endif
         auto &raw = result.first;
         auto &erasures = result.second;
