@@ -18,10 +18,6 @@ namespace dump978 {
         return i * i + q * q;
     }
 
-    static inline double magsq_int16(std::int16_t i, std::int16_t q) {
-        return ((double)i * i + (double)q * q) / (32768 * 32768);
-    }
-
     SampleConverter::Pointer SampleConverter::Create(SampleFormat format) {
         switch (format) {
         case SampleFormat::CU8:
