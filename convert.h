@@ -22,33 +22,37 @@ namespace dump978 {
     // Return the number of bytes for 1 sample in the given format
     inline static unsigned BytesPerSample(SampleFormat f) {
         switch (f) {
-        case SampleFormat::CU8: return 2;
-        case SampleFormat::CS8: return 2;
-        case SampleFormat::CS16H: return 4;
-        case SampleFormat::CF32H: return 8;
-        default: return 0;
+        case SampleFormat::CU8:
+            return 2;
+        case SampleFormat::CS8:
+            return 2;
+        case SampleFormat::CS16H:
+            return 4;
+        case SampleFormat::CF32H:
+            return 8;
+        default:
+            return 0;
         }
     }
 
     // Base class for all sample converters.
     // Use SampleConverter::Create to build converters.
     class SampleConverter {
-    public:
+      public:
         typedef std::shared_ptr<SampleConverter> Pointer;
 
-        SampleConverter(SampleFormat format)
-            : format_(format), bytes_per_sample_(dump978::BytesPerSample(format)) {}
+        SampleConverter(SampleFormat format) : format_(format), bytes_per_sample_(dump978::BytesPerSample(format)) {}
 
         virtual ~SampleConverter() {}
 
-        // Read samples from `begin` .. `end` and write one phase value per sample to `out`.
-        // The input buffer should contain an integral number of samples (trailing
-        // partial samples are ignored, not buffered).
+        // Read samples from `begin` .. `end` and write one phase value per sample to
+        // `out`. The input buffer should contain an integral number of samples
+        // (trailing partial samples are ignored, not buffered).
         virtual void ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) = 0;
 
-        // Read samples from `begin` .. `end` and write one magnitude-squared value per sample to `out`.
-        // The input buffer should contain an integral number of samples (trailing
-        // partial samples are ignored, not buffered).
+        // Read samples from `begin` .. `end` and write one magnitude-squared value
+        // per sample to `out`. The input buffer should contain an integral number of
+        // samples (trailing partial samples are ignored, not buffered).
         virtual void ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) = 0;
 
         SampleFormat Format() const { return format_; }
@@ -57,58 +61,58 @@ namespace dump978 {
         // Return a new SampleConverter that converts from the given format
         static Pointer Create(SampleFormat format);
 
-    private:
+      private:
         SampleFormat format_;
         unsigned bytes_per_sample_;
     };
 
     class CU8Converter : public SampleConverter {
-    public:
+      public:
         CU8Converter();
 
         void ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) override;
         void ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) override;
 
-    private:
+      private:
         union cu8_alias {
             std::uint8_t iq[2];
             std::uint16_t iq16;
         };
 
-        std::array<std::uint16_t,65536> lookup_phase_;
-        std::array<double,65536> lookup_magsq_;
+        std::array<std::uint16_t, 65536> lookup_phase_;
+        std::array<double, 65536> lookup_magsq_;
     };
 
     class CS8Converter : public SampleConverter {
-    public:
+      public:
         CS8Converter();
 
         void ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) override;
         void ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) override;
 
-    private:
+      private:
         union cs8_alias {
             std::int8_t iq[2];
             std::uint16_t iq16;
         };
 
-        std::array<std::uint16_t,65536> lookup_phase_;
-        std::array<double,65536> lookup_magsq_;
+        std::array<std::uint16_t, 65536> lookup_phase_;
+        std::array<double, 65536> lookup_magsq_;
     };
 
     class CS16HConverter : public SampleConverter {
-    public:
+      public:
         CS16HConverter() : SampleConverter(SampleFormat::CS16H) {}
         void ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) override;
         void ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) override;
     };
 
     class CF32HConverter : public SampleConverter {
-    public:
+      public:
         CF32HConverter() : SampleConverter(SampleFormat::CF32H) {}
         void ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) override;
         void ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) override;
     };
-};
+}; // namespace dump978
 
 #endif

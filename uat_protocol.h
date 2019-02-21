@@ -8,12 +8,7 @@
 #define UAT_PROTOCOL_H
 
 namespace uat {
-    enum class MessageType {
-        DOWNLINK_SHORT,
-        DOWNLINK_LONG,
-        UPLINK,
-        INVALID
-    };
+    enum class MessageType { DOWNLINK_SHORT, DOWNLINK_LONG, UPLINK, INVALID };
 
     const unsigned SYNC_BITS = 36;
     const std::uint64_t DOWNLINK_SYNC_WORD = 0xEACDDA4E2UL;
@@ -52,7 +47,7 @@ namespace uat {
         const int DOWNLINK_SHORT_PAD = 255 - DOWNLINK_SHORT_BYTES;
         const int DOWNLINK_LONG_PAD = 255 - DOWNLINK_LONG_BYTES;
         const int UPLINK_BLOCK_PAD = 255 - UPLINK_BLOCK_BYTES;
-    };
-};
+    }; // namespace fec
+};     // namespace uat
 
 #endif

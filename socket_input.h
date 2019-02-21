@@ -17,22 +17,16 @@
 
 namespace uat {
     class RawInput : public MessageSource, public std::enable_shared_from_this<RawInput> {
-    public:
+      public:
         typedef std::shared_ptr<RawInput> Pointer;
 
-        static Pointer Create(boost::asio::io_service &service,
-                              const std::string &host,
-                              const std::string &port_or_service) {
-            return Pointer(new RawInput(service, host, port_or_service));
-        }
+        static Pointer Create(boost::asio::io_service &service, const std::string &host, const std::string &port_or_service) { return Pointer(new RawInput(service, host, port_or_service)); }
 
         void Start();
         void Stop();
 
-    private:
-        RawInput(boost::asio::io_service &service,
-                 const std::string &host,
-                 const std::string &port_or_service);
+      private:
+        RawInput(boost::asio::io_service &service, const std::string &host, const std::string &port_or_service);
 
         void TryNextEndpoint(const boost::system::error_code &last_error);
         void ScheduleRead();
@@ -51,8 +45,6 @@ namespace uat {
         std::vector<char> readbuf_;
         std::size_t used_;
     };
-};
+}; // namespace uat
 
 #endif
-
-

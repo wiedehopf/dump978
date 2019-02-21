@@ -7,9 +7,9 @@
 #ifndef UAT_COMMON_H
 #define UAT_COMMON_H
 
-#include <vector>
-#include <cstdint>
 #include <cmath>
+#include <cstdint>
+#include <vector>
 
 namespace uat {
     typedef std::vector<std::uint8_t> Bytes;
@@ -19,6 +19,6 @@ namespace uat {
         const double scale = std::pow(10, dp);
         return std::round(value * scale) / scale;
     }
-};
+}; // namespace uat
 
 #endif

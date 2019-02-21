@@ -6,14 +6,18 @@
 
 using namespace uat;
 
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
-void AircraftState::UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &message)
-{
-#define UPDATE(x) do { if (message.x) { x.MaybeUpdate(at, *message.x); } } while(0)
+void AircraftState::UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &message) {
+#define UPDATE(x)                          \
+    do {                                   \
+        if (message.x) {                   \
+            x.MaybeUpdate(at, *message.x); \
+        }                                  \
+    } while (0)
 
-    UPDATE(position);  // latitude, longitude
+    UPDATE(position); // latitude, longitude
     UPDATE(pressure_altitude);
     UPDATE(geometric_altitude);
     UPDATE(nic);
@@ -34,7 +38,7 @@ void AircraftState::UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &
 
     UPDATE(emitter_category);
     UPDATE(callsign);
-    UPDATE(flightplan_id);   // aka Mode 3/A squawk
+    UPDATE(flightplan_id); // aka Mode 3/A squawk
     UPDATE(emergency);
     UPDATE(mops_version);
     UPDATE(sil);
@@ -58,19 +62,19 @@ void AircraftState::UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &
 
     // derive horizontal containment radius
     if (message.nic) {
-        static std::map<unsigned,double> rc_lookup = {
+        static std::map<unsigned, double> rc_lookup = {
             /* 0 - unknown */
-            { 1, 37040 },
-            { 2, 14816 },
-            { 3, 7408 },
-            { 4, 3704 },
-            { 5, 1852 },
+            {1, 37040},
+            {2, 14816},
+            {3, 7408},
+            {4, 3704},
+            {5, 1852},
             /* 6 - special case */
-            { 7, 370.4 },
-            { 8, 185.2 },
-            { 9, 75 },
-            { 10, 25 },
-            { 11, 7.5 }
+            {7, 370.4},
+            {8, 185.2},
+            {9, 75},
+            {10, 25},
+            {11, 7.5}
             /* 12..15 - reserved */
         };
 
@@ -95,23 +99,18 @@ void AircraftState::UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &
 #undef UPDATE
 }
 
-void Tracker::Start()
-{
+void Tracker::Start() {
     PurgeOld(); // starts timer
 }
 
-void Tracker::Stop()
-{
-    timer_.cancel();
-}
+void Tracker::Stop() { timer_.cancel(); }
 
-void Tracker::PurgeOld()
-{
+void Tracker::PurgeOld() {
     static auto unix_epoch = std::chrono::system_clock::from_time_t(0);
     auto expires = std::chrono::system_clock::now() - timeout_;
     std::uint64_t expires_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(expires - unix_epoch).count();
 
-    for (auto i = aircraft_.begin(); i != aircraft_.end(); ) {
+    for (auto i = aircraft_.begin(); i != aircraft_.end();) {
         if (i->second.last_message_time < expires_timestamp) {
             i = aircraft_.erase(i);
         } else {
@@ -120,42 +119,41 @@ void Tracker::PurgeOld()
     }
     auto self(shared_from_this());
     timer_.expires_from_now(timeout_ / 4);
-    timer_.async_wait(strand_.wrap([this,self](const boost::system::error_code &ec) {
-                if (!ec) {
-                    PurgeOld();
-                }
-            }));
+    timer_.async_wait(strand_.wrap([this, self](const boost::system::error_code &ec) {
+        if (!ec) {
+            PurgeOld();
+        }
+    }));
 }
 
-void Tracker::HandleMessages(SharedMessageVector messages)
-{
+void Tracker::HandleMessages(SharedMessageVector messages) {
     static auto unix_epoch = std::chrono::system_clock::from_time_t(0);
     const std::uint64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - unix_epoch).count();
 
     auto self(shared_from_this());
-    strand_.dispatch([this,self,now,messages]() {
-            const std::uint64_t PAST_FUZZ = 15000;
-            const std::uint64_t FUTURE_FUZZ = 1000;
+    strand_.dispatch([this, self, now, messages]() {
+        const std::uint64_t PAST_FUZZ = 15000;
+        const std::uint64_t FUTURE_FUZZ = 1000;
 
-            for (const auto &message : *messages) {
-                // validate message time vs system clock so we are only processing contemporaneous messages
-                if (message.ReceivedAt() == 0 || message.ReceivedAt() < (now - PAST_FUZZ) || message.ReceivedAt() > (now + FUTURE_FUZZ)) {
-                    std::cerr << "DISCARD " << message.ReceivedAt() << std::endl;
-                    continue;
-                }
-                if (message.Type() == MessageType::DOWNLINK_SHORT || message.Type() == MessageType::DOWNLINK_LONG) {
-                    HandleMessage(message.ReceivedAt(), AdsbMessage(message));
-                }
+        for (const auto &message : *messages) {
+            // validate message time vs system clock so we are only processing
+            // contemporaneous messages
+            if (message.ReceivedAt() == 0 || message.ReceivedAt() < (now - PAST_FUZZ) || message.ReceivedAt() > (now + FUTURE_FUZZ)) {
+                std::cerr << "DISCARD " << message.ReceivedAt() << std::endl;
+                continue;
             }
-        });
+            if (message.Type() == MessageType::DOWNLINK_SHORT || message.Type() == MessageType::DOWNLINK_LONG) {
+                HandleMessage(message.ReceivedAt(), AdsbMessage(message));
+            }
+        }
+    });
 }
 
-void Tracker::HandleMessage(std::uint64_t at, const uat::AdsbMessage &message)
-{
-    AddressKey key { message.address_qualifier, message.address };
+void Tracker::HandleMessage(std::uint64_t at, const uat::AdsbMessage &message) {
+    AddressKey key{message.address_qualifier, message.address};
     auto i = aircraft_.find(key);
     if (i == aircraft_.end()) {
-        aircraft_[key] = { message.address_qualifier, message.address };
+        aircraft_[key] = {message.address_qualifier, message.address};
     }
 
     aircraft_[key].UpdateFromMessage(at, message);

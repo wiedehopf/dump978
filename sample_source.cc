@@ -4,8 +4,8 @@
 
 #include "sample_source.h"
 
-#include <iostream>
 #include <chrono>
+#include <iostream>
 
 namespace dump978 {
     void FileSampleSource::Start() {
@@ -48,7 +48,7 @@ namespace dump978 {
         }
 
         block_.resize(block_.capacity());
-        stream_.read(reinterpret_cast<char*>(block_.data()), block_.size());
+        stream_.read(reinterpret_cast<char *>(block_.data()), block_.size());
 
         if (stream_.bad()) {
             auto ec = boost::system::error_code(errno, boost::system::system_category());
@@ -102,38 +102,36 @@ namespace dump978 {
         }
 
         auto self = shared_from_this();
-        stream_.async_read_some(boost::asio::buffer(block_.data() + used_, block_.size() - used_),
-                                [this,self] (const boost::system::error_code& ec, std::size_t bytes_transferred) {
-                                    if (ec) {
-                                        if (ec == boost::asio::error::operation_aborted) {
-                                            return;
-                                        }
+        stream_.async_read_some(boost::asio::buffer(block_.data() + used_, block_.size() - used_), [this, self](const boost::system::error_code &ec, std::size_t bytes_transferred) {
+            if (ec) {
+                if (ec == boost::asio::error::operation_aborted) {
+                    return;
+                }
 
-                                        stream_.close();
-                                        DispatchError(ec);
-                                        return;
-                                    }
+                stream_.close();
+                DispatchError(ec);
+                return;
+            }
 
-                                    used_ += bytes_transferred;
+            used_ += bytes_transferred;
 
-                                    // work out a starting timestamp
-                                    static auto unix_epoch = std::chrono::system_clock::from_time_t(0);
-                                    auto end_of_block = std::chrono::system_clock::now();
-                                    auto start_of_block = end_of_block - (std::chrono::milliseconds(1000) * bytes_transferred / samples_per_second_ / alignment_);
-                                    std::uint64_t timestamp =
-                                        std::chrono::duration_cast<std::chrono::milliseconds>(start_of_block - unix_epoch).count();
+            // work out a starting timestamp
+            static auto unix_epoch = std::chrono::system_clock::from_time_t(0);
+            auto end_of_block = std::chrono::system_clock::now();
+            auto start_of_block = end_of_block - (std::chrono::milliseconds(1000) * bytes_transferred / samples_per_second_ / alignment_);
+            std::uint64_t timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(start_of_block - unix_epoch).count();
 
-                                    // fixme, don't copy!
-                                    auto trailing_bytes = used_ % alignment_;
-                                    auto leading_bytes = used_ - trailing_bytes;
+            // fixme, don't copy!
+            auto trailing_bytes = used_ % alignment_;
+            auto leading_bytes = used_ - trailing_bytes;
 
-                                    uat::Bytes buffer;
-                                    buffer.resize(leading_bytes);
-                                    std::copy(block_.begin(), block_.begin() + leading_bytes, buffer.begin());
-                                    std::copy(block_.begin() + leading_bytes, block_.end(), block_.begin());
-                                    used_ = trailing_bytes;
-                                    DispatchBuffer(timestamp, buffer);
-                                    ScheduleRead();
-                                });
+            uat::Bytes buffer;
+            buffer.resize(leading_bytes);
+            std::copy(block_.begin(), block_.begin() + leading_bytes, buffer.begin());
+            std::copy(block_.begin() + leading_bytes, block_.end(), block_.begin());
+            used_ = trailing_bytes;
+            DispatchBuffer(timestamp, buffer);
+            ScheduleRead();
+        });
     }
-};
+}; // namespace dump978

@@ -7,16 +7,16 @@
 #ifndef MESSAGE_DISPATCH_H
 #define MESSAGE_DISPATCH_H
 
+#include <atomic>
 #include <functional>
 #include <map>
-#include <atomic>
 #include <mutex>
 
 #include "uat_message.h"
 
 namespace uat {
     class MessageDispatch {
-    public:
+      public:
         typedef unsigned Handle;
         typedef std::function<void(SharedMessageVector)> MessageHandler;
 
@@ -29,10 +29,10 @@ namespace uat {
 
         void Dispatch(SharedMessageVector messages);
 
-    protected:
+      protected:
         void PurgeDeadClients();
 
-    private:
+      private:
         std::recursive_mutex mutex_;
         Handle next_handle_;
         unsigned busy_;
@@ -44,6 +44,6 @@ namespace uat {
 
         std::map<Handle, Client> clients_;
     };
-};
+}; // namespace uat
 
 #endif

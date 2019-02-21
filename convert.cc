@@ -4,8 +4,8 @@
 
 #include "convert.h"
 
-#include <cmath>
 #include <assert.h>
+#include <cmath>
 
 namespace dump978 {
     static inline std::uint16_t scaled_atan2(double y, double x) {
@@ -14,9 +14,7 @@ namespace dump978 {
         return scaled_ang < 0 ? 0 : scaled_ang > 65535 ? 65535 : (std::uint16_t)scaled_ang;
     }
 
-    static inline double magsq(double i, double q) {
-        return i * i + q * q;
-    }
+    static inline double magsq(double i, double q) { return i * i + q * q; }
 
     SampleConverter::Pointer SampleConverter::Create(SampleFormat format) {
         switch (format) {
@@ -33,13 +31,11 @@ namespace dump978 {
         }
     }
 
-    CU8Converter::CU8Converter()
-        : SampleConverter(SampleFormat::CU8)
-    {
+    CU8Converter::CU8Converter() : SampleConverter(SampleFormat::CU8) {
 
         cu8_alias u;
 
-        unsigned i,q;
+        unsigned i, q;
         for (i = 0; i < 256; ++i) {
             double d_i = (i - 127.5) / 128.0;
             for (q = 0; q < 256; ++q) {
@@ -52,9 +48,8 @@ namespace dump978 {
         }
     }
 
-    void CU8Converter::ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out)
-    {
-        const cu8_alias *in_iq = reinterpret_cast<const cu8_alias*>(&*begin);
+    void CU8Converter::ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) {
+        const cu8_alias *in_iq = reinterpret_cast<const cu8_alias *>(&*begin);
 
         // unroll the loop
         const auto n = std::distance(begin, end) / 2;
@@ -77,7 +72,7 @@ namespace dump978 {
     }
 
     void CU8Converter::ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) {
-        const cu8_alias *in_iq = reinterpret_cast<const cu8_alias*>(&*begin);
+        const cu8_alias *in_iq = reinterpret_cast<const cu8_alias *>(&*begin);
 
         // unroll the loop
         const auto n = std::distance(begin, end) / 2;
@@ -99,12 +94,10 @@ namespace dump978 {
         }
     }
 
-    CS8Converter::CS8Converter()
-        : SampleConverter(SampleFormat::CS8)
-    {
+    CS8Converter::CS8Converter() : SampleConverter(SampleFormat::CS8) {
         cs8_alias u;
 
-        int i,q;
+        int i, q;
         for (i = -128; i <= 127; ++i) {
             double d_i = i / 128.0;
             for (q = -128; q <= 127; ++q) {
@@ -117,9 +110,8 @@ namespace dump978 {
         }
     }
 
-    void CS8Converter::ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end,  uat::PhaseBuffer::iterator out)
-    {
-        auto in_iq = reinterpret_cast<const cs8_alias*>(&*begin);
+    void CS8Converter::ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) {
+        auto in_iq = reinterpret_cast<const cs8_alias *>(&*begin);
 
         // unroll the loop
         const auto n = std::distance(begin, end) / 2;
@@ -141,9 +133,8 @@ namespace dump978 {
         }
     }
 
-    void CS8Converter::ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out)
-    {
-        auto in_iq = reinterpret_cast<const cs8_alias*>(&*begin);
+    void CS8Converter::ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) {
+        auto in_iq = reinterpret_cast<const cs8_alias *>(&*begin);
 
         // unroll the loop
         const auto n = std::distance(begin, end) / 2;
@@ -165,9 +156,8 @@ namespace dump978 {
         }
     }
 
-    void CS16HConverter::ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end,  uat::PhaseBuffer::iterator out)
-    {
-        auto in_iq = reinterpret_cast<const std::int16_t*>(&*begin);
+    void CS16HConverter::ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) {
+        auto in_iq = reinterpret_cast<const std::int16_t *>(&*begin);
 
         // unroll the loop
         const auto n = std::distance(begin, end) / 4;
@@ -189,9 +179,8 @@ namespace dump978 {
         }
     }
 
-    void CS16HConverter::ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out)
-    {
-        auto in_iq = reinterpret_cast<const std::int16_t*>(&*begin);
+    void CS16HConverter::ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) {
+        auto in_iq = reinterpret_cast<const std::int16_t *>(&*begin);
 
         // unroll the loop
         const auto n = std::distance(begin, end) / 4;
@@ -213,9 +202,8 @@ namespace dump978 {
         }
     }
 
-    void CF32HConverter::ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end,  uat::PhaseBuffer::iterator out)
-    {
-        auto in_iq = reinterpret_cast<const double*>(&*begin);
+    void CF32HConverter::ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) {
+        auto in_iq = reinterpret_cast<const double *>(&*begin);
 
         // unroll the loop
         const auto n = std::distance(begin, end) / 8;
@@ -237,9 +225,8 @@ namespace dump978 {
         }
     }
 
-    void CF32HConverter::ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out)
-    {
-        auto in_iq = reinterpret_cast<const double*>(&*begin);
+    void CF32HConverter::ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) {
+        auto in_iq = reinterpret_cast<const double *>(&*begin);
 
         // unroll the loop
         const auto n = std::distance(begin, end) / 8;
@@ -260,4 +247,4 @@ namespace dump978 {
             *out++ = magsq(in_iq[15], in_iq[14]);
         }
     }
-}
+} // namespace dump978

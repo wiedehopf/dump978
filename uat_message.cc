@@ -5,9 +5,9 @@
 #include "uat_message.h"
 
 #include <cmath>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <iomanip>
 
 #include <boost/io/ios_state.hpp>
 
@@ -44,8 +44,7 @@ namespace uat {
             os << "rssi=" << std::dec << std::setprecision(1) << std::fixed << message.Rssi() << ';';
         }
         if (message.ReceivedAt() != 0) {
-            os << "t=" << std::dec << std::setw(0) << (message.ReceivedAt() / 1000) << '.'
-               << std::setfill('0') << std::setw(3) << (message.ReceivedAt() % 1000) << ';';
+            os << "t=" << std::dec << std::setw(0) << (message.ReceivedAt() / 1000) << '.' << std::setfill('0') << std::setw(3) << (message.ReceivedAt() % 1000) << ';';
         }
         return os;
     }
@@ -60,9 +59,9 @@ namespace uat {
         }
 
         // HDR
-        payload_type = raw.Bits(1,1, 1,5);
-        address_qualifier = static_cast<AddressQualifier>(raw.Bits(1,6, 1,8));
-        address = raw.Bits(2,1, 4,8);
+        payload_type = raw.Bits(1, 1, 1, 5);
+        address_qualifier = static_cast<AddressQualifier>(raw.Bits(1, 6, 1, 8));
+        address = raw.Bits(2, 1, 4, 8);
 
         // Optional parts of the message
         // DO-282B Table 2-10 "Composition of the ADS-B Payload"
@@ -111,23 +110,24 @@ namespace uat {
     }
 
     void AdsbMessage::DecodeSV(const RawMessage &raw) {
-        auto raw_lat = raw.Bits(5,1, 7,7);
-        auto raw_lon = raw.Bits(7,8, 10,7);
+        auto raw_lat = raw.Bits(5, 1, 7, 7);
+        auto raw_lon = raw.Bits(7, 8, 10, 7);
 
-        auto raw_alt = raw.Bits(11,1, 12,4);
+        auto raw_alt = raw.Bits(11, 1, 12, 4);
         if (raw_alt != 0) {
             auto altitude = (raw_alt - 41) * 25;
-            if (raw.Bit(10,8)) { // 2.2.4.5.2.2 "ALTITUDE TYPE" field
+            if (raw.Bit(10, 8)) { // 2.2.4.5.2.2 "ALTITUDE TYPE" field
                 geometric_altitude = altitude;
             } else {
                 pressure_altitude = altitude;
             }
         }
 
-        nic = raw.Bits(12,5, 12,8);
+        nic = raw.Bits(12, 5, 12, 8);
 
         if (raw_lat != 0 || raw_lon != 0 || *nic != 0) {
-            // NB: north and south pole encode identically. We return north pole in this case
+            // NB: north and south pole encode identically. We return north pole in this
+            // case
             auto lat = raw_lat * 360.0 / 16777216.0;
             if (lat > 90)
                 lat -= 180;
@@ -139,7 +139,7 @@ namespace uat {
             position = std::make_pair<>(RoundN(lat, 5), RoundN(lon, 5));
         }
 
-        airground_state = static_cast<AirGroundState>(raw.Bits(13,1, 13,2));
+        airground_state = static_cast<AirGroundState>(raw.Bits(13, 1, 13, 2));
 
         // bit 13,3 reserved
 
@@ -147,13 +147,13 @@ namespace uat {
         case AirGroundState::AIRBORNE_SUBSONIC:
         case AirGroundState::AIRBORNE_SUPERSONIC: {
             int supersonic = (*airground_state == AirGroundState::AIRBORNE_SUPERSONIC ? 4 : 1);
-            int ns_sign = raw.Bit(13,4) ? -1 : 1;
-            auto raw_ns = raw.Bits(13,5, 14,6);
+            int ns_sign = raw.Bit(13, 4) ? -1 : 1;
+            auto raw_ns = raw.Bits(13, 5, 14, 6);
             if (raw_ns != 0)
                 north_velocity = supersonic * ns_sign * (raw_ns - 1);
 
-            int ew_sign = raw.Bit(14,7) ? -1 : 1;
-            auto raw_ew = raw.Bits(14,8, 16,1);
+            int ew_sign = raw.Bit(14, 7) ? -1 : 1;
+            auto raw_ew = raw.Bits(14, 8, 16, 1);
             if (raw_ew != 0)
                 east_velocity = supersonic * ew_sign * (raw_ew - 1);
 
@@ -166,9 +166,9 @@ namespace uat {
                 true_track = RoundN(angle, 1);
             }
 
-            vv_src = static_cast<VerticalVelocitySource>(raw.Bits(16,2, 16,2));
-            int vv_sign = raw.Bit(16,3) ? -1 : 1;
-            auto raw_vv = raw.Bits(16,4, 17,4);
+            vv_src = static_cast<VerticalVelocitySource>(raw.Bits(16, 2, 16, 2));
+            int vv_sign = raw.Bit(16, 3) ? -1 : 1;
+            auto raw_vv = raw.Bits(16, 4, 17, 4);
             if (raw_vv != 0) {
                 auto vertical_velocity = vv_sign * (raw_vv - 1) * 64;
                 switch (vv_src.get()) {
@@ -186,14 +186,14 @@ namespace uat {
 
         case AirGroundState::ON_GROUND: {
             // 13,4 reserved
-            auto raw_gs = raw.Bits(13,5, 14,6);
+            auto raw_gs = raw.Bits(13, 5, 14, 6);
             if (raw_gs != 0)
                 ground_speed = (raw_gs - 1);
 
-            auto tah_type = raw.Bits(14,7, 14,8);
-            auto angle = RoundN(raw.Bits(15,1, 16,1) * 360.0 / 512.0, 1);
+            auto tah_type = raw.Bits(14, 7, 14, 8);
+            auto angle = RoundN(raw.Bits(15, 1, 16, 1) * 360.0 / 512.0, 1);
             switch (tah_type) { // 2.2.4.5.2.6.4 / Table 2-28 "Track Angle/Heading Type"
-            case 0: // data unavailable
+            case 0:             // data unavailable
                 break;
             case 1: // true track
                 true_track = angle;
@@ -206,34 +206,32 @@ namespace uat {
                 break;
             }
 
-            auto raw_av_size = raw.Bits(16,2, 16,5);
+            auto raw_av_size = raw.Bits(16, 2, 16, 5);
             if (raw_av_size != 0) {
                 // DO-282B Table 2-35
-                static std::array<std::pair<double,double>,16> aircraft_sizes = { {
-                        { 0, 0 }, // no data
-                        { 15, 23 },
-                        { 25, 28.5 },
-                        { 25, 34 },
-                        { 35, 33 },
-                        { 35, 38 },
-                        { 45, 39.5 },
-                        { 45, 45 },
-                        { 55, 45 },
-                        { 55, 52 },
-                        { 65, 59.5 },
-                        { 65, 67 },
-                        { 75, 72.5 },
-                        { 75, 80 },
-                        { 85, 80 },
-                        { 85, 90 }
-                    } };
+                static std::array<std::pair<double, double>, 16> aircraft_sizes = {{{0, 0}, // no data
+                                                                                    {15, 23},
+                                                                                    {25, 28.5},
+                                                                                    {25, 34},
+                                                                                    {35, 33},
+                                                                                    {35, 38},
+                                                                                    {45, 39.5},
+                                                                                    {45, 45},
+                                                                                    {55, 45},
+                                                                                    {55, 52},
+                                                                                    {65, 59.5},
+                                                                                    {65, 67},
+                                                                                    {75, 72.5},
+                                                                                    {75, 80},
+                                                                                    {85, 80},
+                                                                                    {85, 90}}};
 
                 aircraft_size = aircraft_sizes[raw_av_size];
             }
 
-            if (raw.Bit(16,7)) {
+            if (raw.Bit(16, 7)) {
                 // Longitudinal GPS offset
-                auto raw_gps_long = raw.Bits(16,8, 17,4);
+                auto raw_gps_long = raw.Bits(16, 8, 17, 4);
                 if (raw_gps_long != 0) {
                     if (raw_gps_long == 1) {
                         gps_position_offset_applied = true;
@@ -245,7 +243,7 @@ namespace uat {
             } else {
                 // Lateral GPS offset
                 // We adopt the convention that left is negative
-                auto raw_gps_lat = raw.Bits(16,8, 17,2);
+                auto raw_gps_lat = raw.Bits(16, 8, 17, 2);
                 if (raw_gps_lat != 0) {
                     if (raw_gps_lat <= 3) {
                         gps_lateral_offset = raw_gps_lat * -2;
@@ -268,14 +266,14 @@ namespace uat {
         case AddressQualifier::ADSB_OTHER:
         case AddressQualifier::VEHICLE:
         case AddressQualifier::FIXED_BEACON:
-            utc_coupled = raw.Bit(17,5);
-            uplink_feedback = raw.Bits(17,6, 17,8);
+            utc_coupled = raw.Bit(17, 5);
+            uplink_feedback = raw.Bits(17, 6, 17, 8);
             break;
 
         case AddressQualifier::TISB_ICAO:
         case AddressQualifier::TISB_OTHER:
         case AddressQualifier::ADSR_OTHER:
-            tisb_site_id = raw.Bits(17,5, 17,8);
+            tisb_site_id = raw.Bits(17, 5, 17, 8);
             break;
 
         default:
@@ -289,29 +287,29 @@ namespace uat {
         // or at byte 25 (§2.2.4.5.7) in payload type 6;
         // the starting offset to use is passed by the caller
 
-        selected_altitude_type = static_cast<SelectedAltitudeType>(raw.Bits(startbyte+0,1, startbyte+0,1));
-        auto raw_altitude = raw.Bits(startbyte+0,2, startbyte+1,4);
+        selected_altitude_type = static_cast<SelectedAltitudeType>(raw.Bits(startbyte + 0, 1, startbyte + 0, 1));
+        auto raw_altitude = raw.Bits(startbyte + 0, 2, startbyte + 1, 4);
         if (raw_altitude != 0) {
             selected_altitude = (raw_altitude - 1) * 32;
         }
 
-        auto raw_bps = raw.Bits(startbyte+1,5, startbyte+2,5);
+        auto raw_bps = raw.Bits(startbyte + 1, 5, startbyte + 2, 5);
         if (raw_bps != 0)
             barometric_pressure_setting = 800 + (raw_bps - 1) * 0.8;
 
-        if (raw.Bit(startbyte+2,6)) {
-            int heading_sign = raw.Bit(startbyte+2,7) ? -1 : 1;
-            auto heading = RoundN(raw.Bits(startbyte+2,8, startbyte+3,7) * 180.0 / 256.0, 1);
+        if (raw.Bit(startbyte + 2, 6)) {
+            int heading_sign = raw.Bit(startbyte + 2, 7) ? -1 : 1;
+            auto heading = RoundN(raw.Bits(startbyte + 2, 8, startbyte + 3, 7) * 180.0 / 256.0, 1);
             selected_heading = heading_sign * heading;
         }
 
-        if (raw.Bit(startbyte+3,8)) {
+        if (raw.Bit(startbyte + 3, 8)) {
             mode_indicators.emplace();
-            mode_indicators->autopilot = raw.Bit(startbyte+4,1);
-            mode_indicators->vnav = raw.Bit(startbyte+4,2);
-            mode_indicators->altitude_hold = raw.Bit(startbyte+4,3);
-            mode_indicators->approach = raw.Bit(startbyte+4,4);
-            mode_indicators->lnav = raw.Bit(startbyte+4,5);
+            mode_indicators->autopilot = raw.Bit(startbyte + 4, 1);
+            mode_indicators->vnav = raw.Bit(startbyte + 4, 2);
+            mode_indicators->altitude_hold = raw.Bit(startbyte + 4, 3);
+            mode_indicators->approach = raw.Bit(startbyte + 4, 4);
+            mode_indicators->lnav = raw.Bit(startbyte + 4, 5);
         }
 
         // 34,6 .. 34,8 reserved
@@ -319,9 +317,9 @@ namespace uat {
 
     void AdsbMessage::DecodeMS(const RawMessage &raw) {
         static const char *base40_alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ *??";
-        auto raw1 = raw.Bits(18,1, 19,8);
-        auto raw2 = raw.Bits(20,1, 21,8);
-        auto raw3 = raw.Bits(22,1, 23,8);
+        auto raw1 = raw.Bits(18, 1, 19, 8);
+        auto raw2 = raw.Bits(20, 1, 21, 8);
+        auto raw3 = raw.Bits(22, 1, 23, 8);
 
         emitter_category = (raw1 / 1600) % 40;
 
@@ -342,45 +340,46 @@ namespace uat {
         }
 
         if (!raw_callsign.empty()) {
-            if (raw.Bit(27,7)) { // CSID field, 1 = callsign, 0 = flightplan ID (aka squawk)
+            if (raw.Bit(27,
+                        7)) { // CSID field, 1 = callsign, 0 = flightplan ID (aka squawk)
                 callsign.emplace(std::move(raw_callsign));
             } else {
                 flightplan_id.emplace(std::move(raw_callsign));
             }
         }
 
-        emergency = static_cast<EmergencyPriorityStatus>(raw.Bits(24,1, 24,3));
-        mops_version = raw.Bits(24,4, 24,6);
-        sil = raw.Bits(24,7, 24,8);
-        transmit_mso = raw.Bits(25,1, 25,6);
-        sda = raw.Bits(25,7, 25,8);
-        nac_p = raw.Bits(26,1, 26,4);
-        nac_v = raw.Bits(26,5, 26,7);
-        nic_baro = raw.Bits(26,8, 26,8);
+        emergency = static_cast<EmergencyPriorityStatus>(raw.Bits(24, 1, 24, 3));
+        mops_version = raw.Bits(24, 4, 24, 6);
+        sil = raw.Bits(24, 7, 24, 8);
+        transmit_mso = raw.Bits(25, 1, 25, 6);
+        sda = raw.Bits(25, 7, 25, 8);
+        nac_p = raw.Bits(26, 1, 26, 4);
+        nac_v = raw.Bits(26, 5, 26, 7);
+        nic_baro = raw.Bits(26, 8, 26, 8);
 
         capability_codes.emplace();
-        capability_codes->uat_in = raw.Bit(27,1);
-        capability_codes->es_in = raw.Bit(27,2);
-        capability_codes->tcas_operational = raw.Bit(27,3);
+        capability_codes->uat_in = raw.Bit(27, 1);
+        capability_codes->es_in = raw.Bit(27, 2);
+        capability_codes->tcas_operational = raw.Bit(27, 3);
 
         operational_modes.emplace();
-        operational_modes->tcas_ra_active = raw.Bit(27,4);
-        operational_modes->ident_active = raw.Bit(27,5);
-        operational_modes->atc_services = raw.Bit(27,6);
+        operational_modes->tcas_ra_active = raw.Bit(27, 4);
+        operational_modes->ident_active = raw.Bit(27, 5);
+        operational_modes->atc_services = raw.Bit(27, 6);
 
-        sil_supplement = static_cast<SILSupplement>(raw.Bits(27,8, 27,8));
-        gva = raw.Bits(28,1, 28,2);
-        single_antenna = raw.Bit(28,3);
-        nic_supplement = raw.Bit(28,4);
+        sil_supplement = static_cast<SILSupplement>(raw.Bits(27, 8, 27, 8));
+        gva = raw.Bits(28, 1, 28, 2);
+        single_antenna = raw.Bit(28, 3);
+        nic_supplement = raw.Bit(28, 4);
         // 28,5 .. 29,8 reserved
-
     }
 
     void AdsbMessage::DecodeAUXSV(const RawMessage &raw) {
-        auto raw_alt = raw.Bits(30,1, 31,4);
+        auto raw_alt = raw.Bits(30, 1, 31, 4);
         if (raw_alt != 0) {
             auto altitude = (raw_alt - 41) * 25;
-            if (raw.Bit(10,8)) { // 2.2.4.5.2.2 "ALTITUDE TYPE" field (in SV, which is always present when AUXSV is present)
+            if (raw.Bit(10, 8)) { // 2.2.4.5.2.2 "ALTITUDE TYPE" field (in SV, which is
+                                  // always present when AUXSV is present)
                 pressure_altitude = altitude;
             } else {
                 geometric_altitude = altitude;
@@ -392,48 +391,17 @@ namespace uat {
     // converting decoded messages to json
     //
 
-    NLOHMANN_JSON_SERIALIZE_ENUM( AddressQualifier, {
-            { AddressQualifier::ADSB_ICAO, "adsb_icao" },
-            { AddressQualifier::ADSB_OTHER, "adsb_other" },
-            { AddressQualifier::TISB_ICAO, "tisb_icao" },
-            { AddressQualifier::TISB_OTHER, "tisb_other" },
-            { AddressQualifier::VEHICLE, "vehicle" },
-            { AddressQualifier::ADSB_ICAO, "fixed_beacon" },
-            { AddressQualifier::ADSB_ICAO, "adsr_other" },
-            { AddressQualifier::RESERVED_7, "reserved_7" }
-        } );
+    NLOHMANN_JSON_SERIALIZE_ENUM(AddressQualifier, {{AddressQualifier::ADSB_ICAO, "adsb_icao"}, {AddressQualifier::ADSB_OTHER, "adsb_other"}, {AddressQualifier::TISB_ICAO, "tisb_icao"}, {AddressQualifier::TISB_OTHER, "tisb_other"}, {AddressQualifier::VEHICLE, "vehicle"}, {AddressQualifier::ADSB_ICAO, "fixed_beacon"}, {AddressQualifier::ADSB_ICAO, "adsr_other"}, {AddressQualifier::RESERVED_7, "reserved_7"}});
 
-    NLOHMANN_JSON_SERIALIZE_ENUM( AirGroundState, {
-            { AirGroundState::AIRBORNE_SUBSONIC, "airborne" },
-            { AirGroundState::AIRBORNE_SUPERSONIC, "supersonic" },
-            { AirGroundState::ON_GROUND, "ground" },
-            { AirGroundState::RESERVED, "reserved" }
-        } );
+    NLOHMANN_JSON_SERIALIZE_ENUM(AirGroundState, {{AirGroundState::AIRBORNE_SUBSONIC, "airborne"}, {AirGroundState::AIRBORNE_SUPERSONIC, "supersonic"}, {AirGroundState::ON_GROUND, "ground"}, {AirGroundState::RESERVED, "reserved"}});
 
-    NLOHMANN_JSON_SERIALIZE_ENUM( VerticalVelocitySource, {
-            { VerticalVelocitySource::GEOMETRIC, "geometric" },
-            { VerticalVelocitySource::BAROMETRIC, "barometric" }
-        } );
+    NLOHMANN_JSON_SERIALIZE_ENUM(VerticalVelocitySource, {{VerticalVelocitySource::GEOMETRIC, "geometric"}, {VerticalVelocitySource::BAROMETRIC, "barometric"}});
 
-    NLOHMANN_JSON_SERIALIZE_ENUM( EmergencyPriorityStatus, {
-            { EmergencyPriorityStatus::NONE, "none" },
-            { EmergencyPriorityStatus::GENERAL, "general" },
-            { EmergencyPriorityStatus::MEDICAL, "medical" },
-            { EmergencyPriorityStatus::NORDO, "nordo" },
-            { EmergencyPriorityStatus::UNLAWFUL, "unlawful" },
-            { EmergencyPriorityStatus::DOWNED, "downed" },
-            { EmergencyPriorityStatus::RESERVED_7, "reserved_7" }
-        } );
+    NLOHMANN_JSON_SERIALIZE_ENUM(EmergencyPriorityStatus, {{EmergencyPriorityStatus::NONE, "none"}, {EmergencyPriorityStatus::GENERAL, "general"}, {EmergencyPriorityStatus::MEDICAL, "medical"}, {EmergencyPriorityStatus::NORDO, "nordo"}, {EmergencyPriorityStatus::UNLAWFUL, "unlawful"}, {EmergencyPriorityStatus::DOWNED, "downed"}, {EmergencyPriorityStatus::RESERVED_7, "reserved_7"}});
 
-    NLOHMANN_JSON_SERIALIZE_ENUM( SILSupplement, {
-            { SILSupplement::PER_HOUR, "per_hour" },
-            { SILSupplement::PER_SAMPLE, "per_sample" }
-        } );
+    NLOHMANN_JSON_SERIALIZE_ENUM(SILSupplement, {{SILSupplement::PER_HOUR, "per_hour"}, {SILSupplement::PER_SAMPLE, "per_sample"}});
 
-    NLOHMANN_JSON_SERIALIZE_ENUM( SelectedAltitudeType, {
-            { SelectedAltitudeType::MCP_FCU, "mcp_fcu" },
-            { SelectedAltitudeType::FMS, "fms" }
-        } );
+    NLOHMANN_JSON_SERIALIZE_ENUM(SelectedAltitudeType, {{SelectedAltitudeType::MCP_FCU, "mcp_fcu"}, {SelectedAltitudeType::FMS, "fms"}});
 
     nlohmann::json AdsbMessage::ToJson() const {
         nlohmann::json o;
@@ -444,10 +412,15 @@ namespace uat {
         os << std::hex << std::setfill('0') << std::setw(6) << address;
         o["address"] = os.str();
 
-#define EMIT(x) do { if (x) { o[#x] = *x; } } while(0)
+#define EMIT(x)         \
+    do {                \
+        if (x) {        \
+            o[#x] = *x; \
+        }               \
+    } while (0)
 
         if (position)
-            o["position"] = { {"lat", position->first}, {"lon", position->second} };
+            o["position"] = {{"lat", position->first}, {"lon", position->second}};
 
         EMIT(pressure_altitude);
         EMIT(geometric_altitude);
@@ -464,7 +437,7 @@ namespace uat {
         EMIT(true_track);
 
         if (aircraft_size)
-            o["aircraft_size"] = { {"length", aircraft_size->first}, {"width", aircraft_size->second} };
+            o["aircraft_size"] = {{"length", aircraft_size->first}, {"width", aircraft_size->second}};
 
         EMIT(gps_lateral_offset);
         EMIT(gps_longitudinal_offset);
@@ -521,4 +494,4 @@ namespace uat {
 
         return o;
     }
-};
+}; // namespace uat

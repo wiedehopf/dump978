@@ -4,19 +4,19 @@
 
 #include <boost/asio/ip/address_v4.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/exception/diagnostic_information.hpp>
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
-#include <boost/exception/diagnostic_information.hpp>
 
-#include <memory>
 #include <iostream>
+#include <memory>
 
-#include "socket_output.h"
+#include "convert.h"
+#include "demodulator.h"
 #include "message_dispatch.h"
 #include "sample_source.h"
 #include "soapy_source.h"
-#include "convert.h"
-#include "demodulator.h"
+#include "socket_output.h"
 
 using namespace uat;
 using namespace dump978;
@@ -34,10 +34,7 @@ struct format_option {
 };
 
 // Specializations of validate for --xxx-port
-void validate(boost::any& v,
-              const std::vector<std::string>& values,
-              listen_option* target_type, int)
-{
+void validate(boost::any &v, const std::vector<std::string> &values, listen_option *target_type, int) {
     po::validators::check_first_occurrence(v);
     const std::string &s = po::validators::get_single_string(values);
 
@@ -54,45 +51,27 @@ void validate(boost::any& v,
 }
 
 // Specializations of validate for --format
-void validate(boost::any& v,
-              const std::vector<std::string>& values,
-              format_option* target_type, int)
-{
+void validate(boost::any &v, const std::vector<std::string> &values, format_option *target_type, int) {
     po::validators::check_first_occurrence(v);
     const std::string &s = po::validators::get_single_string(values);
 
-    static std::map<std::string,SampleFormat> formats {
-        { "CU8", SampleFormat::CU8 },
-        { "CS8", SampleFormat::CS8 },
-        { "CS16H", SampleFormat::CS16H },
-        { "CF32H", SampleFormat::CF32H }
-    };
+    static std::map<std::string, SampleFormat> formats{{"CU8", SampleFormat::CU8}, {"CS8", SampleFormat::CS8}, {"CS16H", SampleFormat::CS16H}, {"CF32H", SampleFormat::CF32H}};
 
     auto entry = formats.find(s);
     if (entry == formats.end())
         throw po::validation_error(po::validation_error::invalid_option_value);
 
-    v = boost::any(format_option { entry->second });
+    v = boost::any(format_option{entry->second});
 }
 
 #define EXIT_NO_RESTART (64)
 
-static int realmain(int argc, char **argv)
-{
+static int realmain(int argc, char **argv) {
     boost::asio::io_service io_service;
 
     po::options_description desc("Allowed options");
-    desc.add_options()
-        ("help", "produce help message")
-        ("raw-stdout", "write raw messages to stdout")
-        ("json-stdout", "write decoded json to stdout")
-        ("format", po::value<format_option>()->default_value({ SampleFormat::CU8 }, "CU8"), "set sample format")
-        ("stdin", "read sample data from stdin")
-        ("file", po::value<std::string>(), "read sample data from a file")
-        ("file-throttle", "throttle file input to realtime")
-        ("sdr", po::value<std::string>(), "read sample data from named SDR device")
-        ("raw-port", po::value< std::vector<listen_option> >(), "listen for connections on [host:]port and provide raw messages")
-        ("json-port", po::value< std::vector<listen_option> >(), "listen for connections on [host:]port and provide decoded json");
+    desc.add_options()("help", "produce help message")("raw-stdout", "write raw messages to stdout")("json-stdout", "write decoded json to stdout")("format", po::value<format_option>()->default_value({SampleFormat::CU8}, "CU8"), "set sample format")("stdin", "read sample data from stdin")("file", po::value<std::string>(), "read sample data from a file")("file-throttle", "throttle file input to realtime")("sdr", po::value<std::string>(), "read sample data from named SDR device")(
+        "raw-port", po::value<std::vector<listen_option>>(), "listen for connections on [host:]port and provide raw messages")("json-port", po::value<std::vector<listen_option>>(), "listen for connections on [host:]port and provide decoded json");
 
     po::variables_map opts;
 
@@ -140,7 +119,7 @@ static int realmain(int argc, char **argv)
         }
 
         bool ok = true;
-        for (auto l : opts[option].as< std::vector<listen_option> >()) {
+        for (auto l : opts[option].as<std::vector<listen_option>>()) {
             tcp::resolver::query query(l.host, l.port, tcp::resolver::query::passive);
             boost::system::error_code ec;
 
@@ -177,33 +156,33 @@ static int realmain(int argc, char **argv)
 
     if (opts.count("raw-stdout")) {
         dispatch.AddClient([](SharedMessageVector messages) {
-                for (const auto &message : *messages) {
-                    std::cout << message << std::endl;
-                }
-            });
+            for (const auto &message : *messages) {
+                std::cout << message << std::endl;
+            }
+        });
     }
 
     if (opts.count("json-stdout")) {
         dispatch.AddClient([](SharedMessageVector messages) {
-                for (const auto &message : *messages) {
-                    if (message.Type() == MessageType::DOWNLINK_SHORT || message.Type() == MessageType::DOWNLINK_LONG) {
-                        std::cout << AdsbMessage(message).ToJson() << std::endl;
-                    }
+            for (const auto &message : *messages) {
+                if (message.Type() == MessageType::DOWNLINK_SHORT || message.Type() == MessageType::DOWNLINK_LONG) {
+                    std::cout << AdsbMessage(message).ToJson() << std::endl;
                 }
-            });
+            }
+        });
     }
 
     auto receiver = std::make_shared<SingleThreadReceiver>(format);
     receiver->SetConsumer(std::bind(&MessageDispatch::Dispatch, &dispatch, std::placeholders::_1));
 
-    source->SetConsumer([&io_service,receiver](std::uint64_t timestamp, const Bytes &buffer, const boost::system::error_code &ec) {
-            if (ec) {
-                std::cerr << "sample source reports error: " << ec.message() << std::endl;
-                io_service.stop();
-            } else {
-                receiver->HandleSamples(timestamp, buffer.begin(), buffer.end());
-            }
-        });
+    source->SetConsumer([&io_service, receiver](std::uint64_t timestamp, const Bytes &buffer, const boost::system::error_code &ec) {
+        if (ec) {
+            std::cerr << "sample source reports error: " << ec.message() << std::endl;
+            io_service.stop();
+        } else {
+            receiver->HandleSamples(timestamp, buffer.begin(), buffer.end());
+        }
+    });
 
     source->Start();
 
@@ -213,8 +192,7 @@ static int realmain(int argc, char **argv)
     return 0;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     try {
         return realmain(argc, argv);
     } catch (...) {

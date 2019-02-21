@@ -11,25 +11,23 @@
 
 namespace uat {
     class MessageSource {
-    public:
+      public:
         typedef std::function<void(uat::SharedMessageVector)> Consumer;
 
         virtual ~MessageSource() {}
 
-        void SetConsumer(Consumer consumer) {
-            consumer_ = consumer;
-        }
+        void SetConsumer(Consumer consumer) { consumer_ = consumer; }
 
-    protected:
+      protected:
         void DispatchMessages(uat::SharedMessageVector messages) {
             if (consumer_) {
                 consumer_(messages);
             }
         }
 
-    private:
+      private:
         Consumer consumer_;
     };
-};
+}; // namespace uat
 
 #endif

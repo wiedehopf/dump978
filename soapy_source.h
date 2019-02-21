@@ -7,9 +7,9 @@
 #ifndef DUMP978_SOAPY_SOURCE_H
 #define DUMP978_SOAPY_SOURCE_H
 
+#include <atomic>
 #include <memory>
 #include <thread>
-#include <atomic>
 
 #include <SoapySDR/Device.hpp>
 
@@ -17,18 +17,15 @@
 
 namespace dump978 {
     class SoapySampleSource : public SampleSource {
-    public:
-        static SampleSource::Pointer Create(SampleFormat format,
-                                            const std::string &device_name) {
-            return Pointer(new SoapySampleSource(format, device_name));
-        }
+      public:
+        static SampleSource::Pointer Create(SampleFormat format, const std::string &device_name) { return Pointer(new SoapySampleSource(format, device_name)); }
 
         virtual ~SoapySampleSource();
 
         void Start() override;
         void Stop() override;
 
-    private:
+      private:
         SoapySampleSource(SampleFormat format, const std::string &device_name);
 
         void Run();
@@ -43,6 +40,6 @@ namespace dump978 {
 
         static std::atomic_bool log_handler_registered_;
     };
-};
+}; // namespace dump978
 
 #endif

@@ -6,24 +6,20 @@
 #include "demodulator.h"
 
 #include <assert.h>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
 using namespace uat;
 
 namespace dump978 {
-    SingleThreadReceiver::SingleThreadReceiver(SampleFormat format)
-        : converter_(SampleConverter::Create(format)),
-          demodulator_(new TwoMegDemodulator())
-    {}
+    SingleThreadReceiver::SingleThreadReceiver(SampleFormat format) : converter_(SampleConverter::Create(format)), demodulator_(new TwoMegDemodulator()) {}
 
     // Handle samples in 'buffer' by:
     //   converting them to a phase buffer
     //   demodulating the phase buffer
     //   dispatching any demodulated messages
     //   preserving the end of the phase buffer for reuse in the next call
-    void SingleThreadReceiver::HandleSamples(std::uint64_t timestamp, uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end)
-    {
+    void SingleThreadReceiver::HandleSamples(std::uint64_t timestamp, uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end) {
         assert(converter_);
 
         const auto buffer_bytes = std::distance(begin, end);
@@ -85,8 +81,7 @@ namespace dump978 {
         }
     }
 
-    static inline std::int16_t PhaseDifference(std::uint16_t from, std::uint16_t to)
-    {
+    static inline std::int16_t PhaseDifference(std::uint16_t from, std::uint16_t to) {
         int32_t difference = to - from; // lies in the range -65535 .. +65535
         if (difference >= 32768)        //   +32768..+65535
             return difference - 65536;  //   -> -32768..-1: always in range
@@ -96,8 +91,7 @@ namespace dump978 {
             return difference;
     }
 
-    static inline bool SyncWordMatch(std::uint64_t word, std::uint64_t expected)
-    {
+    static inline bool SyncWordMatch(std::uint64_t word, std::uint64_t expected) {
         std::uint64_t diff;
 
         if (word == expected)
@@ -131,22 +125,22 @@ namespace dump978 {
         // or we have seen too many set bits.
 
         // >= 1 bit
-        diff &= (diff-1);   // clear lowest set bit
+        diff &= (diff - 1); // clear lowest set bit
         if (!diff)
             return 1; // 1 bit error
 
         // >= 2 bits
-        diff &= (diff-1);   // clear lowest set bit
+        diff &= (diff - 1); // clear lowest set bit
         if (!diff)
             return 1; // 2 bits error
 
         // >= 3 bits
-        diff &= (diff-1);   // clear lowest set bit
+        diff &= (diff - 1); // clear lowest set bit
         if (!diff)
             return 1; // 3 bits error
 
         // >= 4 bits
-        diff &= (diff-1);   // clear lowest set bit
+        diff &= (diff - 1); // clear lowest set bit
         if (!diff)
             return 1; // 4 bits error
 
@@ -158,8 +152,7 @@ namespace dump978 {
     // that matches the sync word 'pattern'. Return a pair:
     // first element is true if the sync word looks OK; second
     // element has the dphi threshold to use for bit slicing
-    static inline std::pair<bool,std::int16_t> CheckSyncWord(PhaseBuffer::const_iterator phase, std::uint64_t pattern)
-    {
+    static inline std::pair<bool, std::int16_t> CheckSyncWord(PhaseBuffer::const_iterator phase, std::uint64_t pattern) {
         const unsigned MAX_SYNC_ERRORS = 4;
 
         std::int32_t dphi_zero_total = 0;
@@ -172,7 +165,7 @@ namespace dump978 {
 
         for (unsigned i = 0; i < SYNC_BITS; ++i) {
             auto dphi = PhaseDifference(phase[i * 2], phase[i * 2 + 1]);
-            if (pattern & (1UL << (35-i))) {
+            if (pattern & (1UL << (35 - i))) {
                 ++one_bits;
                 dphi_one_total += dphi;
             } else {
@@ -191,7 +184,7 @@ namespace dump978 {
         for (unsigned i = 0; i < SYNC_BITS; ++i) {
             auto dphi = PhaseDifference(phase[i * 2], phase[i * 2 + 1]);
 
-            if (pattern & (1UL << (35-i))) {
+            if (pattern & (1UL << (35 - i))) {
                 if (dphi < center)
                     ++error_bits;
             } else {
@@ -200,25 +193,33 @@ namespace dump978 {
             }
         }
 
-        return { (error_bits <= MAX_SYNC_ERRORS), center };
+        return {(error_bits <= MAX_SYNC_ERRORS), center};
     }
 
-    // demodulate 'bytes' bytes from samples at 'phase' using 'center' as the bit slicing threshold
-    static inline Bytes DemodBits(PhaseBuffer::const_iterator phase, unsigned bytes, std::int16_t center)
-    {
+    // demodulate 'bytes' bytes from samples at 'phase' using 'center' as the bit
+    // slicing threshold
+    static inline Bytes DemodBits(PhaseBuffer::const_iterator phase, unsigned bytes, std::int16_t center) {
         Bytes result;
         result.reserve(bytes);
 
         for (unsigned i = 0; i < bytes; ++i) {
             std::uint8_t b = 0;
-            if (PhaseDifference(phase[0], phase[1]) > center) b |= 0x80;
-            if (PhaseDifference(phase[2], phase[3]) > center) b |= 0x40;
-            if (PhaseDifference(phase[4], phase[5]) > center) b |= 0x20;
-            if (PhaseDifference(phase[6], phase[7]) > center) b |= 0x10;
-            if (PhaseDifference(phase[8], phase[9]) > center) b |= 0x08;
-            if (PhaseDifference(phase[10], phase[11]) > center) b |= 0x04;
-            if (PhaseDifference(phase[12], phase[13]) > center) b |= 0x02;
-            if (PhaseDifference(phase[14], phase[15]) > center) b |= 0x01;
+            if (PhaseDifference(phase[0], phase[1]) > center)
+                b |= 0x80;
+            if (PhaseDifference(phase[2], phase[3]) > center)
+                b |= 0x40;
+            if (PhaseDifference(phase[4], phase[5]) > center)
+                b |= 0x20;
+            if (PhaseDifference(phase[6], phase[7]) > center)
+                b |= 0x10;
+            if (PhaseDifference(phase[8], phase[9]) > center)
+                b |= 0x08;
+            if (PhaseDifference(phase[10], phase[11]) > center)
+                b |= 0x04;
+            if (PhaseDifference(phase[12], phase[13]) > center)
+                b |= 0x02;
+            if (PhaseDifference(phase[14], phase[15]) > center)
+                b |= 0x01;
             result.push_back(b);
             phase += 16;
         }
@@ -226,15 +227,13 @@ namespace dump978 {
         return result;
     }
 
-    unsigned TwoMegDemodulator::NumTrailingSamples() {
-        return (SYNC_BITS + UPLINK_BITS) * 2;
-    }
+    unsigned TwoMegDemodulator::NumTrailingSamples() { return (SYNC_BITS + UPLINK_BITS) * 2; }
 
-    // Try to demodulate messages from `begin` .. `end` and return a list of messages.
-    // Messages that start near the end of the range may not be demodulated
-    // (less than (SYNC_BITS + UPLINK_BITS)*2 before the end of the buffer)
-    std::vector<Demodulator::Message> TwoMegDemodulator::Demodulate(PhaseBuffer::const_iterator begin, PhaseBuffer::const_iterator end)
-    {
+    // Try to demodulate messages from `begin` .. `end` and return a list of
+    // messages. Messages that start near the end of the range may not be
+    // demodulated (less than (SYNC_BITS + UPLINK_BITS)*2 before the end of the
+    // buffer)
+    std::vector<Demodulator::Message> TwoMegDemodulator::Demodulate(PhaseBuffer::const_iterator begin, PhaseBuffer::const_iterator end) {
         // We expect samples at twice the UAT bitrate.
         // We look at phase difference between pairs of adjacent samples, i.e.
         //  sample 1 - sample 0   -> sync0
@@ -260,7 +259,7 @@ namespace dump978 {
 
         unsigned sync_bits = 0;
         std::uint64_t sync0 = 0, sync1 = 0;
-        const std::uint64_t SYNC_MASK = ((((std::uint64_t)1)<<SYNC_BITS)-1);
+        const std::uint64_t SYNC_MASK = ((((std::uint64_t)1) << SYNC_BITS) - 1);
 
         for (auto probe = begin; probe < limit; probe += 2) {
             auto d0 = PhaseDifference(probe[0], probe[1]);
@@ -324,8 +323,7 @@ namespace dump978 {
         return messages;
     }
 
-    boost::optional<Demodulator::Message> TwoMegDemodulator::DemodBest(PhaseBuffer::const_iterator start, bool downlink)
-    {
+    boost::optional<Demodulator::Message> TwoMegDemodulator::DemodBest(PhaseBuffer::const_iterator start, bool downlink) {
         auto message0 = downlink ? DemodOneDownlink(start) : DemodOneUplink(start);
         auto message1 = downlink ? DemodOneDownlink(start + 1) : DemodOneUplink(start + 1);
 
@@ -341,15 +339,14 @@ namespace dump978 {
             return message1; // should be move-eligible
     }
 
-    boost::optional<Demodulator::Message> TwoMegDemodulator::DemodOneDownlink(PhaseBuffer::const_iterator start)
-    {
+    boost::optional<Demodulator::Message> TwoMegDemodulator::DemodOneDownlink(PhaseBuffer::const_iterator start) {
         auto sync = CheckSyncWord(start, DOWNLINK_SYNC_WORD);
         if (!sync.first) {
             // Sync word had errors
             return boost::none;
         }
 
-        Bytes raw = DemodBits(start + SYNC_BITS*2, DOWNLINK_LONG_BYTES, sync.second);
+        Bytes raw = DemodBits(start + SYNC_BITS * 2, DOWNLINK_LONG_BYTES, sync.second);
 
         bool success;
         uat::Bytes corrected;
@@ -361,18 +358,17 @@ namespace dump978 {
         }
 
         auto bits = (raw.size() == DOWNLINK_LONG_BYTES ? DOWNLINK_LONG_BITS : DOWNLINK_SHORT_BITS);
-        return Demodulator::Message { std::move(corrected), errors, start, start + (SYNC_BITS + bits) * 2 };
+        return Demodulator::Message{std::move(corrected), errors, start, start + (SYNC_BITS + bits) * 2};
     }
 
-    boost::optional<Demodulator::Message> TwoMegDemodulator::DemodOneUplink(PhaseBuffer::const_iterator start)
-    {
+    boost::optional<Demodulator::Message> TwoMegDemodulator::DemodOneUplink(PhaseBuffer::const_iterator start) {
         auto sync = CheckSyncWord(start, UPLINK_SYNC_WORD);
         if (!sync.first) {
             // Sync word had errors
             return boost::none;
         }
 
-        Bytes raw = DemodBits(start + SYNC_BITS*2, UPLINK_BYTES, sync.second);
+        Bytes raw = DemodBits(start + SYNC_BITS * 2, UPLINK_BYTES, sync.second);
 
         bool success;
         uat::Bytes corrected;
@@ -384,6 +380,6 @@ namespace dump978 {
             return boost::none;
         }
 
-        return Demodulator::Message { std::move(corrected), errors, start, start + (SYNC_BITS + UPLINK_BITS) * 2 };
+        return Demodulator::Message{std::move(corrected), errors, start, start + (SYNC_BITS + UPLINK_BITS) * 2};
     }
-}
+} // namespace dump978

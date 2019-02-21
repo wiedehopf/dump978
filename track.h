@@ -11,29 +11,21 @@
 #include <memory>
 
 #include <boost/asio/io_service.hpp>
-#include <boost/asio/strand.hpp>
 #include <boost/asio/steady_timer.hpp>
+#include <boost/asio/strand.hpp>
 
 #include "uat_message.h"
 
 namespace uat {
     class AgedFieldBase {
-    public:
-        operator bool() const {
-            return Valid();
-        }
+      public:
+        operator bool() const { return Valid(); }
 
-        bool Valid() const {
-            return (updated_ != 0);
-        }
+        bool Valid() const { return (updated_ != 0); }
 
-        std::uint64_t Changed() const {
-            return changed_;
-        }
+        std::uint64_t Changed() const { return changed_; }
 
-        std::uint64_t Updated() const {
-            return updated_;
-        }
+        std::uint64_t Updated() const { return updated_; }
 
         std::uint64_t ChangeAge(std::uint64_t at) const {
             if (at < changed_) {
@@ -51,18 +43,17 @@ namespace uat {
             }
         }
 
-    protected:
+      protected:
         std::uint64_t updated_ = 0;
         std::uint64_t changed_ = 0;
     };
 
-    template <class T>
-    class AgedField : public AgedFieldBase {
-    public:
+    template <class T> class AgedField : public AgedFieldBase {
+      public:
         AgedField() : v_() {}
-        AgedField(const T& v) : v_(v) {}
+        AgedField(const T &v) : v_(v) {}
 
-        bool MaybeUpdate(std::uint64_t at, const T& v) {
+        bool MaybeUpdate(std::uint64_t at, const T &v) {
             if (at > updated_) {
                 updated_ = at;
                 if (v != v_) {
@@ -75,11 +66,9 @@ namespace uat {
             }
         }
 
-        const T &Value() const {
-            return v_;
-        }
+        const T &Value() const { return v_; }
 
-    private:
+      private:
         T v_;
     };
 
@@ -88,7 +77,7 @@ namespace uat {
         AdsbAddress address;
         std::uint64_t last_message_time;
 
-        AgedField<std::pair<double,double>> position;  // latitude, longitude
+        AgedField<std::pair<double, double>> position; // latitude, longitude
         AgedField<int> pressure_altitude;
         AgedField<int> geometric_altitude;
         AgedField<unsigned> nic;
@@ -101,7 +90,7 @@ namespace uat {
         AgedField<double> magnetic_heading;
         AgedField<double> true_heading;
         AgedField<double> true_track;
-        AgedField<std::pair<double,double>> aircraft_size; // length, width
+        AgedField<std::pair<double, double>> aircraft_size; // length, width
         AgedField<double> gps_lateral_offset;
         AgedField<double> gps_longitudinal_offset;
         AgedField<bool> gps_position_offset_applied;
@@ -109,7 +98,7 @@ namespace uat {
 
         AgedField<unsigned> emitter_category;
         AgedField<std::string> callsign;
-        AgedField<std::string> flightplan_id;   // aka Mode 3/A squawk
+        AgedField<std::string> flightplan_id; // aka Mode 3/A squawk
         AgedField<EmergencyPriorityStatus> emergency;
         AgedField<unsigned> mops_version;
         AgedField<unsigned> sil;
@@ -126,7 +115,7 @@ namespace uat {
         AgedField<bool> nic_supplement;
 
         // derived from nic, nic_supplement
-        AgedField<double> horizontal_containment;  // upper bound, meters
+        AgedField<double> horizontal_containment; // upper bound, meters
 
         AgedField<SelectedAltitudeType> selected_altitude_type;
         AgedField<int> selected_altitude;
@@ -138,14 +127,12 @@ namespace uat {
     };
 
     class Tracker : public std::enable_shared_from_this<Tracker> {
-    public:
-        typedef std::pair<AddressQualifier,AdsbAddress> AddressKey;
+      public:
+        typedef std::pair<AddressQualifier, AdsbAddress> AddressKey;
         typedef std::shared_ptr<Tracker> Pointer;
-        typedef std::map<AddressKey,AircraftState> MapType;
+        typedef std::map<AddressKey, AircraftState> MapType;
 
-        static Pointer Create(boost::asio::io_service &service, std::chrono::seconds timeout = std::chrono::seconds(300)) {
-            return Pointer(new Tracker(service, timeout));
-        }
+        static Pointer Create(boost::asio::io_service &service, std::chrono::seconds timeout = std::chrono::seconds(300)) { return Pointer(new Tracker(service, timeout)); }
 
         void Start();
         void Stop();
@@ -153,10 +140,8 @@ namespace uat {
 
         const MapType &Aircraft() const { return aircraft_; }
 
-    private:
-        Tracker(boost::asio::io_service &service, std::chrono::seconds timeout)
-            : service_(service), strand_(service), timer_(service), timeout_(timeout)
-        {}
+      private:
+        Tracker(boost::asio::io_service &service, std::chrono::seconds timeout) : service_(service), strand_(service), timer_(service), timeout_(timeout) {}
 
         void PurgeOld();
         void HandleMessage(std::uint64_t at, const uat::AdsbMessage &message);
@@ -167,6 +152,6 @@ namespace uat {
         std::chrono::seconds timeout_;
         MapType aircraft_;
     };
-};
+}; // namespace uat
 
 #endif

@@ -2,17 +2,17 @@
 // All rights reserved.
 // Licensed under the 2-clause BSD license; see the LICENSE file
 
+#include <boost/exception/diagnostic_information.hpp>
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
-#include <boost/exception/diagnostic_information.hpp>
 
-#include <memory>
 #include <iostream>
+#include <memory>
 
-#include "socket_input.h"
-#include "message_source.h"
-#include "uat_message.h"
 #include "faup978_reporter.h"
+#include "message_source.h"
+#include "socket_input.h"
+#include "uat_message.h"
 
 using namespace uat;
 using namespace faup978;
@@ -26,17 +26,14 @@ struct connect_option {
 };
 
 // Specializations of validate for --connect
-void validate(boost::any& v,
-              const std::vector<std::string>& values,
-              connect_option* target_type, int)
-{
+void validate(boost::any &v, const std::vector<std::string> &values, connect_option *target_type, int) {
     po::validators::check_first_occurrence(v);
     const std::string &s = po::validators::get_single_string(values);
 
     static const boost::regex r("(?:([^:]+):)?(\\d+)");
     boost::smatch match;
     if (boost::regex_match(s, match, r)) {
-        v = boost::any(connect_option { match[1], match[2] });
+        v = boost::any(connect_option{match[1], match[2]});
     } else {
         throw po::validation_error(po::validation_error::invalid_option_value);
     }
@@ -44,14 +41,11 @@ void validate(boost::any& v,
 
 #define EXIT_NO_RESTART (64)
 
-static int realmain(int argc, char **argv)
-{
+static int realmain(int argc, char **argv) {
     boost::asio::io_service io_service;
 
     po::options_description desc("Allowed options");
-    desc.add_options()
-        ("help", "produce help message")
-        ("connect", po::value<connect_option>(), "connect to host:port for raw UAT data");
+    desc.add_options()("help", "produce help message")("connect", po::value<connect_option>(), "connect to host:port for raw UAT data");
 
     po::variables_map opts;
 
@@ -90,8 +84,7 @@ static int realmain(int argc, char **argv)
     return 0;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 #if 0
     try {
         return realmain(argc, argv);

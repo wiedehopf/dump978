@@ -4,20 +4,17 @@
 
 #include "message_dispatch.h"
 
-#include <mutex>
 #include <boost/thread/locks.hpp>
+#include <mutex>
 
 namespace uat {
-    MessageDispatch::MessageDispatch()
-        : next_handle_(0),
-          busy_(0)
-    {}
+    MessageDispatch::MessageDispatch() : next_handle_(0), busy_(0) {}
 
     MessageDispatch::Handle MessageDispatch::AddClient(MessageHandler handler) {
         std::unique_lock<std::recursive_mutex> lock(mutex_);
 
         Handle h = next_handle_++;
-        clients_[h] = { handler, false };
+        clients_[h] = {handler, false};
         return h;
     }
 
@@ -32,21 +29,14 @@ namespace uat {
         PurgeDeadClients();
     }
 
-    template <typename T>
-    class BusyCounter {
-    public:
-        BusyCounter(T& var)
-            : var_(var), owned_(true)
-        {
-            ++var_;
-        }
+    template <typename T> class BusyCounter {
+      public:
+        BusyCounter(T &var) : var_(var), owned_(true) { ++var_; }
 
-        BusyCounter(const T&) = delete;
-        BusyCounter& operator=(const T&) = delete;
+        BusyCounter(const T &) = delete;
+        BusyCounter &operator=(const T &) = delete;
 
-        ~BusyCounter() {
-            release();
-        }
+        ~BusyCounter() { release(); }
 
         void release() {
             if (owned_) {
@@ -54,8 +44,9 @@ namespace uat {
                 owned_ = false;
             }
         }
-    private:
-        T& var_;
+
+      private:
+        T &var_;
         bool owned_;
     };
 
@@ -78,7 +69,7 @@ namespace uat {
         if (busy_)
             return;
 
-        for (auto i = clients_.begin(); i != clients_.end(); ) {
+        for (auto i = clients_.begin(); i != clients_.end();) {
             Client &c = i->second;
             if (c.deleted)
                 clients_.erase(i++);
@@ -86,4 +77,4 @@ namespace uat {
                 ++i;
         }
     }
-}
+} // namespace uat

@@ -16,7 +16,7 @@ namespace uat {
     // This delegates to the "fec" library (in fec/) for the actual Reed-Solomon
     // error-correction work.
     class FEC {
-    public:
+      public:
         FEC();
         ~FEC();
 
@@ -26,25 +26,28 @@ namespace uat {
         //               this will be either DOWNLINK_SHORT_DATA_BYTES or
         //               DOWNLINK_LONG_DATA_BYTES in size depending on the detected
         //               message type. Empty if the message was uncorrectable.
-        //    unsigned - the number of errors corrected. 0 if the message was uncorrectable
-        // `erasures` is an optional vector of indexes into `raw` that should be handled as erasures
-        std::tuple<bool,uat::Bytes,unsigned> CorrectDownlink(const Bytes &raw, const std::vector<std::size_t> &erasures = {});
+        //    unsigned - the number of errors corrected. 0 if the message was
+        //    uncorrectable
+        // `erasures` is an optional vector of indexes into `raw` that should be
+        // handled as erasures
+        std::tuple<bool, uat::Bytes, unsigned> CorrectDownlink(const Bytes &raw, const std::vector<std::size_t> &erasures = {});
 
         // Given UPLINK_BYTES of demodulated data, returns a tuple of:
         //    bool     - true if the message is good, false if it was uncorrectable.
         //    Bytes    - a buffer containing the deinterleaved, corrected data with
         //               FEC bits removed; this will be exactly UPLINK_DATA_BYTES
         //               in size.  Empty if the message was uncorrectable.
-        //    unsigned - the number of errors corrected. 0 if the message was uncorrectable
-        // `erasures` is an optional vector of indexes into `raw` that should be handled as erasures
-        std::tuple<bool,uat::Bytes,unsigned> CorrectUplink(const Bytes &raw, const std::vector<std::size_t> &erasures = {});
+        //    unsigned - the number of errors corrected. 0 if the message was
+        //    uncorrectable
+        // `erasures` is an optional vector of indexes into `raw` that should be
+        // handled as erasures
+        std::tuple<bool, uat::Bytes, unsigned> CorrectUplink(const Bytes &raw, const std::vector<std::size_t> &erasures = {});
 
-    private:
+      private:
         void *rs_uplink_;
         void *rs_downlink_short_;
         void *rs_downlink_long_;
     };
-};
+}; // namespace uat
 
 #endif
-
