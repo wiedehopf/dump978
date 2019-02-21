@@ -101,7 +101,7 @@ namespace dump978 {
         for (i = -128; i <= 127; ++i) {
             double d_i = i / 128.0;
             for (q = -128; q <= 127; ++q) {
-                double d_q = i / 128.0;
+                double d_q = q / 128.0;
                 u.iq[0] = i;
                 u.iq[1] = q;
                 lookup_phase_[u.iq16] = scaled_atan2(d_q, d_i);
