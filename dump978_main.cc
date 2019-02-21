@@ -201,7 +201,7 @@ static int realmain(int argc, char **argv)
                 std::cerr << "sample source reports error: " << ec.message() << std::endl;
                 io_service.stop();
             } else {
-                receiver->HandleSamples(timestamp, buffer);
+                receiver->HandleSamples(timestamp, buffer.begin(), buffer.end());
             }
         });
 

@@ -19,8 +19,16 @@
 namespace dump978 {
     class Demodulator {
     public:
+        // Return value of Demodulate
+        struct Message {
+            uat::Bytes payload;
+            unsigned corrected_errors;
+            uat::PhaseBuffer::const_iterator begin;
+            uat::PhaseBuffer::const_iterator end;
+        };
+
         virtual ~Demodulator() {}
-        virtual uat::SharedMessageVector Demodulate(std::uint64_t timestamp, const uat::PhaseBuffer &buffer) = 0;
+        virtual std::vector<Message> Demodulate(uat::PhaseBuffer::const_iterator begin, uat::PhaseBuffer::const_iterator end) = 0;
 
         virtual unsigned NumTrailingSamples() = 0;
 
@@ -30,30 +38,34 @@ namespace dump978 {
 
     class TwoMegDemodulator : public Demodulator {
     public:
-        uat::SharedMessageVector Demodulate(std::uint64_t timestamp, const uat::PhaseBuffer &buffer) override;
+        std::vector<Message> Demodulate(uat::PhaseBuffer::const_iterator begin, uat::PhaseBuffer::const_iterator end) override;
         unsigned NumTrailingSamples() override;
 
     private:
-        uat::RawMessage DemodBest(const uat::PhaseBuffer &buffer, unsigned start, bool downlink, std::uint64_t timestamp);
-        uat::RawMessage DemodOneDownlink(const uat::PhaseBuffer &buffer, unsigned start, std::uint64_t timestamp);
-        uat::RawMessage DemodOneUplink(const uat::PhaseBuffer &buffer, unsigned start, std::uint64_t timestamp);
+        boost::optional<Message> DemodBest(uat::PhaseBuffer::const_iterator begin, bool downlink);
+        boost::optional<Message> DemodOneDownlink(uat::PhaseBuffer::const_iterator begin);
+        boost::optional<Message> DemodOneUplink(uat::PhaseBuffer::const_iterator begin);
     };
 
     class Receiver : public uat::MessageSource {
     public:
-        virtual void HandleSamples(std::uint64_t timestamp, const uat::Bytes &buffer) = 0;
+        virtual void HandleSamples(std::uint64_t timestamp, uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end) = 0;
     };
 
     class SingleThreadReceiver : public Receiver {
     public:
         SingleThreadReceiver(SampleFormat format);
 
-        void HandleSamples(std::uint64_t timestamp, const uat::Bytes &buffer) override;
+        void HandleSamples(std::uint64_t timestamp, uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end) override;
 
     private:
         SampleConverter::Pointer converter_;
-        uat::PhaseBuffer phase_;
         std::unique_ptr<Demodulator> demodulator_;
+
+        uat::Bytes samples_;
+        std::size_t saved_samples_ = 0;
+
+        uat::PhaseBuffer phase_;
     };
 
 };

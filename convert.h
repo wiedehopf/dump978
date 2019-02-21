@@ -36,22 +36,38 @@ namespace dump978 {
     public:
         typedef std::shared_ptr<SampleConverter> Pointer;
 
-        virtual ~SampleConverter() {};
+        SampleConverter(SampleFormat format)
+            : format_(format), bytes_per_sample_(dump978::BytesPerSample(format)) {}
 
-        // Read samples from `in` and append one phase value per sample to `out`.
+        virtual ~SampleConverter() {}
+
+        // Read samples from `begin` .. `end` and write one phase value per sample to `out`.
         // The input buffer should contain an integral number of samples (trailing
-        // partial samples are ignored, not buffered)
-        virtual void Convert(const uat::Bytes &in, uat::PhaseBuffer &out) = 0;
+        // partial samples are ignored, not buffered).
+        virtual void ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) = 0;
+
+        // Read samples from `begin` .. `end` and write one magnitude-squared value per sample to `out`.
+        // The input buffer should contain an integral number of samples (trailing
+        // partial samples are ignored, not buffered).
+        virtual void ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) = 0;
+
+        SampleFormat Format() const { return format_; }
+        unsigned BytesPerSample() const { return bytes_per_sample_; }
 
         // Return a new SampleConverter that converts from the given format
         static Pointer Create(SampleFormat format);
+
+    private:
+        SampleFormat format_;
+        unsigned bytes_per_sample_;
     };
 
     class CU8Converter : public SampleConverter {
     public:
         CU8Converter();
 
-        void Convert(const uat::Bytes &in, uat::PhaseBuffer &out) override;
+        void ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) override;
+        void ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) override;
 
     private:
         union cu8_alias {
@@ -59,14 +75,16 @@ namespace dump978 {
             std::uint16_t iq16;
         };
 
-        std::array<std::uint16_t,65536> lookup_;
+        std::array<std::uint16_t,65536> lookup_phase_;
+        std::array<double,65536> lookup_magsq_;
     };
 
     class CS8Converter : public SampleConverter {
     public:
         CS8Converter();
 
-        void Convert(const uat::Bytes &in, uat::PhaseBuffer &out) override;
+        void ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) override;
+        void ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) override;
 
     private:
         union cs8_alias {
@@ -74,17 +92,22 @@ namespace dump978 {
             std::uint16_t iq16;
         };
 
-        std::array<std::uint16_t,65536> lookup_;
+        std::array<std::uint16_t,65536> lookup_phase_;
+        std::array<double,65536> lookup_magsq_;
     };
 
     class CS16HConverter : public SampleConverter {
     public:
-        void Convert(const uat::Bytes &in, uat::PhaseBuffer &out) override;
+        CS16HConverter() : SampleConverter(SampleFormat::CS16H) {}
+        void ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) override;
+        void ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) override;
     };
 
     class CF32HConverter : public SampleConverter {
     public:
-        void Convert(const uat::Bytes &in, uat::PhaseBuffer &out) override;
+        CF32HConverter() : SampleConverter(SampleFormat::CF32H) {}
+        void ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) override;
+        void ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) override;
     };
 };
 

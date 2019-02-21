@@ -22,24 +22,71 @@ namespace dump978 {
     //   demodulating the phase buffer
     //   dispatching any demodulated messages
     //   preserving the end of the phase buffer for reuse in the next call
-    void SingleThreadReceiver::HandleSamples(std::uint64_t timestamp, const Bytes &buffer) {
+    void SingleThreadReceiver::HandleSamples(std::uint64_t timestamp, uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end)
+    {
         assert(converter_);
-        converter_->Convert(buffer, phase_); // appends to phase_
 
-        auto messages = demodulator_->Demodulate(timestamp, phase_); // FIXME: not correct because of the preamble
-        if (messages && !messages->empty()) {
-            DispatchMessages(messages);
+        const auto buffer_bytes = std::distance(begin, end);
+        const auto buffer_samples = buffer_bytes / converter_->BytesPerSample();
+
+        const auto previous_samples = saved_samples_;
+        const auto previous_bytes = previous_samples * converter_->BytesPerSample();
+
+        const auto total_samples = buffer_samples + previous_samples;
+        const auto total_bytes = total_samples * converter_->BytesPerSample();
+
+        if (samples_.size() < total_bytes) {
+            samples_.resize(total_bytes);
         }
 
-        // preserve the tail of the phase buffer for next time
+        // TODO: rearrange things to avoid this copy
+        std::copy(begin, end, samples_.begin() + previous_bytes);
+
+        if (phase_.size() < total_samples) {
+            phase_.resize(total_samples);
+        }
+
+        converter_->ConvertPhase(samples_.begin(), samples_.begin() + total_bytes, phase_.begin());
+        auto messages = demodulator_->Demodulate(phase_.begin(), phase_.begin() + total_samples);
+
+        if (!messages.empty()) {
+            SharedMessageVector dispatch = std::make_shared<MessageVector>();
+            dispatch->reserve(messages.size());
+            for (auto &message : messages) {
+                std::vector<double> magsq;
+                magsq.resize(std::distance(message.begin, message.end));
+
+                auto begin_sample = samples_.begin() + std::distance(phase_.cbegin(), message.begin) * converter_->BytesPerSample();
+                auto end_sample = samples_.begin() + std::distance(phase_.cbegin(), message.end) * converter_->BytesPerSample();
+
+                converter_->ConvertMagSq(begin_sample, end_sample, magsq.begin());
+
+                auto total_power = 0.0;
+                for (auto m : magsq) {
+                    total_power += m;
+                }
+
+                auto rssi = (total_power == 0 ? -1000 : 10 * std::log10(total_power / magsq.size()));
+                auto message_timestamp = timestamp + 1000 * (std::distance(phase_.cbegin(), message.begin) - previous_samples) / 2083333;
+
+                dispatch->emplace_back(std::move(message.payload), message_timestamp, message.corrected_errors, rssi);
+            }
+
+            DispatchMessages(dispatch);
+        }
+
+        // preserve the tail of the sample buffer for next time
         const auto tail_size = demodulator_->NumTrailingSamples();
-        if (phase_.size() > tail_size) {
-            std::copy(phase_.end() - tail_size, phase_.end(), phase_.begin());
-            phase_.resize(tail_size);
+        if (total_samples > tail_size) {
+            std::copy(samples_.end() - tail_size * converter_->BytesPerSample(), samples_.end(), samples_.begin());
+            saved_samples_ = tail_size;
+        } else {
+            saved_samples_ = total_samples;
         }
     }
 
-    static inline std::int16_t PhaseDifference(std::uint16_t from, std::uint16_t to) {
+    static inline std::int16_t PhaseDifference(std::uint16_t from, std::uint16_t to)
+    {
         int32_t difference = to - from; // lies in the range -65535 .. +65535
         if (difference >= 32768)        //   +32768..+65535
             return difference - 65536;  //   -> -32768..-1: always in range
@@ -49,7 +96,8 @@ namespace dump978 {
             return difference;
     }
 
-    static inline bool SyncWordMatch(std::uint64_t word, std::uint64_t expected) {
+    static inline bool SyncWordMatch(std::uint64_t word, std::uint64_t expected)
+    {
         std::uint64_t diff;
 
         if (word == expected)
@@ -106,11 +154,12 @@ namespace dump978 {
         return 0;
     }
 
-    // check that there is a valid sync word starting at 'start'
+    // check that there is a valid sync word starting at 'phase'
     // that matches the sync word 'pattern'. Return a pair:
     // first element is true if the sync word looks OK; second
     // element has the dphi threshold to use for bit slicing
-    static inline std::pair<bool,std::int16_t> CheckSyncWord(const PhaseBuffer &buffer, unsigned start, std::uint64_t pattern) {
+    static inline std::pair<bool,std::int16_t> CheckSyncWord(PhaseBuffer::const_iterator phase, std::uint64_t pattern)
+    {
         const unsigned MAX_SYNC_ERRORS = 4;
 
         std::int32_t dphi_zero_total = 0;
@@ -122,7 +171,7 @@ namespace dump978 {
         // take the mean of the two as our central value
 
         for (unsigned i = 0; i < SYNC_BITS; ++i) {
-            auto dphi = PhaseDifference(buffer[start + i * 2], buffer[start + i * 2 + 1]);
+            auto dphi = PhaseDifference(phase[i * 2], phase[i * 2 + 1]);
             if (pattern & (1UL << (35-i))) {
                 ++one_bits;
                 dphi_one_total += dphi;
@@ -140,7 +189,7 @@ namespace dump978 {
         // recheck sync word using our center value
         unsigned error_bits = 0;
         for (unsigned i = 0; i < SYNC_BITS; ++i) {
-            auto dphi = PhaseDifference(buffer[start + i * 2], buffer[start + i * 2 + 1]);
+            auto dphi = PhaseDifference(phase[i * 2], phase[i * 2 + 1]);
 
             if (pattern & (1UL << (35-i))) {
                 if (dphi < center)
@@ -154,17 +203,12 @@ namespace dump978 {
         return { (error_bits <= MAX_SYNC_ERRORS), center };
     }
 
-    // demodulate 'bytes' bytes from samples at 'start' using 'center' as the bit slicing threshold
-    static inline Bytes DemodBits(const PhaseBuffer &buffer, unsigned start, unsigned bytes, std::int16_t center)
+    // demodulate 'bytes' bytes from samples at 'phase' using 'center' as the bit slicing threshold
+    static inline Bytes DemodBits(PhaseBuffer::const_iterator phase, unsigned bytes, std::int16_t center)
     {
         Bytes result;
         result.reserve(bytes);
 
-        if (start + bytes * 8 * 2 >= buffer.size()) {
-            throw std::runtime_error("would overrun source buffer");
-        }
-
-        auto *phase = buffer.data() + start;
         for (unsigned i = 0; i < bytes; ++i) {
             std::uint8_t b = 0;
             if (PhaseDifference(phase[0], phase[1]) > center) b |= 0x80;
@@ -186,10 +230,11 @@ namespace dump978 {
         return (SYNC_BITS + UPLINK_BITS) * 2;
     }
 
-    // Try to demodulate messages from `buffer` and return a list of messages.
-    // Messages that start near the end of `buffer` may not be demodulated
+    // Try to demodulate messages from `begin` .. `end` and return a list of messages.
+    // Messages that start near the end of the range may not be demodulated
     // (less than (SYNC_BITS + UPLINK_BITS)*2 before the end of the buffer)
-    SharedMessageVector TwoMegDemodulator::Demodulate(std::uint64_t timestamp, const PhaseBuffer &buffer) {
+    std::vector<Demodulator::Message> TwoMegDemodulator::Demodulate(PhaseBuffer::const_iterator begin, PhaseBuffer::const_iterator end)
+    {
         // We expect samples at twice the UAT bitrate.
         // We look at phase difference between pairs of adjacent samples, i.e.
         //  sample 1 - sample 0   -> sync0
@@ -208,21 +253,18 @@ namespace dump978 {
         // ensure we don't consume any partial sync word we might be part-way
         // through. This means we don't need to maintain state between calls.
 
-        SharedMessageVector messages = std::make_shared<MessageVector>();
+        std::vector<Demodulator::Message> messages;
 
-        const auto trailing_samples = (SYNC_BITS + UPLINK_BITS) * 2 - 2;
-        if (buffer.size() <= trailing_samples) {
-            return messages;
-        }
-        const auto limit = buffer.size() - trailing_samples;
+        const auto trailing_samples = (SYNC_BITS + UPLINK_BITS) * 2;
+        const auto limit = end - trailing_samples;
 
         unsigned sync_bits = 0;
         std::uint64_t sync0 = 0, sync1 = 0;
         const std::uint64_t SYNC_MASK = ((((std::uint64_t)1)<<SYNC_BITS)-1);
 
-        for (unsigned i = 0; i < limit; i += 2) {
-            auto d0 = PhaseDifference(buffer[i], buffer[i + 1]);
-            auto d1 = PhaseDifference(buffer[i + 1], buffer[i + 2]);
+        for (auto probe = begin; probe < limit; probe += 2) {
+            auto d0 = PhaseDifference(probe[0], probe[1]);
+            auto d1 = PhaseDifference(probe[1], probe[2]);
 
             sync0 = ((sync0 << 1) | (d0 > 0 ? 1 : 0)) & SYNC_MASK;
             sync1 = ((sync1 << 1) | (d1 > 0 ? 1 : 0)) & SYNC_MASK;
@@ -235,49 +277,45 @@ namespace dump978 {
             // and with the next position, and pick the one with fewer
             // errors.
             if (SyncWordMatch(sync0, DOWNLINK_SYNC_WORD)) {
-                auto start = i - SYNC_BITS * 2 + 2;
-                auto start_timestamp = timestamp + start * 1000 / 2083333;
-                auto message = DemodBest(buffer, start, true /* downlink */, start_timestamp);
+                auto start = probe - SYNC_BITS * 2 + 2;
+                auto message = DemodBest(start, true /* downlink */);
                 if (message) {
-                    i = start + message.BitLength() * 2;
+                    probe = message->end - 2;
                     sync_bits = 0;
-                    messages->emplace_back(std::move(message));
+                    messages.emplace_back(std::move(message.value()));
                     continue;
                 }
             }
 
             if (SyncWordMatch(sync1, DOWNLINK_SYNC_WORD)) {
-                auto start = i - SYNC_BITS * 2 + 3;
-                auto start_timestamp = timestamp + start * 1000 / 2083333;
-                auto message = DemodBest(buffer, start, true /* downlink */, start_timestamp);
+                auto start = probe - SYNC_BITS * 2 + 3;
+                auto message = DemodBest(start, true /* downlink */);
                 if (message) {
-                    i = start + message.BitLength() * 2;
+                    probe = message->end - 2;
                     sync_bits = 0;
-                    messages->emplace_back(std::move(message));
+                    messages.emplace_back(std::move(message.value()));
                     continue;
                 }
             }
 
             if (SyncWordMatch(sync0, UPLINK_SYNC_WORD)) {
-                auto start = i - SYNC_BITS * 2 + 2;
-                auto start_timestamp = timestamp + start * 1000 / 2083333;
-                auto message = DemodBest(buffer, start, false /* !downlink */, start_timestamp);
+                auto start = probe - SYNC_BITS * 2 + 2;
+                auto message = DemodBest(start, false /* !downlink */);
                 if (message) {
-                    i = start + message.BitLength() * 2;
+                    probe = message->end - 2;
                     sync_bits = 0;
-                    messages->emplace_back(std::move(message));
+                    messages.emplace_back(std::move(message.value()));
                     continue;
                 }
             }
 
             if (SyncWordMatch(sync1, UPLINK_SYNC_WORD)) {
-                auto start = i - SYNC_BITS * 2 + 3;
-                auto start_timestamp = timestamp + start * 1000 / 2083333;
-                auto message = DemodBest(buffer, start, false /* !downlink */, start_timestamp);
+                auto start = probe - SYNC_BITS * 2 + 3;
+                auto message = DemodBest(start, false /* !downlink */);
                 if (message) {
-                    i = start + message.BitLength() * 2;
+                    probe = message->end - 2;
                     sync_bits = 0;
-                    messages->emplace_back(std::move(message));
+                    messages.emplace_back(std::move(message.value()));
                     continue;
                 }
             }
@@ -286,12 +324,16 @@ namespace dump978 {
         return messages;
     }
 
-    RawMessage TwoMegDemodulator::DemodBest(const PhaseBuffer &buffer, unsigned start, bool downlink, std::uint64_t timestamp) {
-        auto message0 = downlink ? DemodOneDownlink(buffer, start, timestamp) : DemodOneUplink(buffer, start, timestamp);
-        auto message1 = downlink ? DemodOneDownlink(buffer, start + 1, timestamp) : DemodOneUplink(buffer, start + 1, timestamp);
+    boost::optional<Demodulator::Message> TwoMegDemodulator::DemodBest(PhaseBuffer::const_iterator start, bool downlink)
+    {
+        auto message0 = downlink ? DemodOneDownlink(start) : DemodOneUplink(start);
+        auto message1 = downlink ? DemodOneDownlink(start + 1) : DemodOneUplink(start + 1);
 
-        unsigned errors0 = (message0 ? message0.Errors() : 9999);
-        unsigned errors1 = (message1 ? message1.Errors() : 9999);
+        if (!message0 && !message1)
+            return boost::none;
+
+        unsigned errors0 = (message0 ? message0->corrected_errors : 9999);
+        unsigned errors1 = (message1 ? message1->corrected_errors : 9999);
 
         if (errors0 <= errors1)
             return message0; // should be move-eligible
@@ -299,14 +341,15 @@ namespace dump978 {
             return message1; // should be move-eligible
     }
 
-    RawMessage TwoMegDemodulator::DemodOneDownlink(const PhaseBuffer &buffer, unsigned start, std::uint64_t timestamp) {
-        auto sync = CheckSyncWord(buffer, start, DOWNLINK_SYNC_WORD);
+    boost::optional<Demodulator::Message> TwoMegDemodulator::DemodOneDownlink(PhaseBuffer::const_iterator start)
+    {
+        auto sync = CheckSyncWord(start, DOWNLINK_SYNC_WORD);
         if (!sync.first) {
             // Sync word had errors
-            return RawMessage();
+            return boost::none;
         }
 
-        Bytes raw = DemodBits(buffer, start + SYNC_BITS*2, DOWNLINK_LONG_BYTES, sync.second);
+        Bytes raw = DemodBits(start + SYNC_BITS*2, DOWNLINK_LONG_BYTES, sync.second);
 
         bool success;
         uat::Bytes corrected;
@@ -314,20 +357,22 @@ namespace dump978 {
         std::tie(success, corrected, errors) = fec_.CorrectDownlink(raw);
         if (!success) {
             // Error correction failed
-            return RawMessage();
+            return boost::none;
         }
 
-        return RawMessage(std::move(corrected), timestamp, errors, 0);
+        auto bits = (raw.size() == DOWNLINK_LONG_BYTES ? DOWNLINK_LONG_BITS : DOWNLINK_SHORT_BITS);
+        return Demodulator::Message { std::move(corrected), errors, start, start + (SYNC_BITS + bits) * 2 };
     }
 
-    RawMessage TwoMegDemodulator::DemodOneUplink(const PhaseBuffer &buffer, unsigned start, std::uint64_t timestamp) {
-        auto sync = CheckSyncWord(buffer, start, UPLINK_SYNC_WORD);
+    boost::optional<Demodulator::Message> TwoMegDemodulator::DemodOneUplink(PhaseBuffer::const_iterator start)
+    {
+        auto sync = CheckSyncWord(start, UPLINK_SYNC_WORD);
         if (!sync.first) {
             // Sync word had errors
-            return RawMessage();
+            return boost::none;
         }
 
-        Bytes raw = DemodBits(buffer, start + SYNC_BITS*2, UPLINK_BYTES, sync.second);
+        Bytes raw = DemodBits(start + SYNC_BITS*2, UPLINK_BYTES, sync.second);
 
         bool success;
         uat::Bytes corrected;
@@ -336,9 +381,9 @@ namespace dump978 {
 
         if (!success) {
             // Error correction failed
-            return RawMessage();
+            return boost::none;
         }
 
-        return RawMessage(std::move(corrected), timestamp, errors, 0);
+        return Demodulator::Message { std::move(corrected), errors, start, start + (SYNC_BITS + UPLINK_BITS) * 2 };
     }
 }
