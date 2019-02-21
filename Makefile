@@ -14,5 +14,8 @@ dump978: dump978_main.o socket_output.o message_dispatch.o fec.o libs/fec/init_r
 faup978: faup978_main.o socket_input.o uat_message.o track.o faup978_reporter.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS)
 
+format:
+	clang-format -style=file -i *.cc *.h
+
 clean:
 	rm -f *.o fec/*.o dump978 faup978
