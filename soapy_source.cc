@@ -65,7 +65,13 @@ namespace dump978 {
 
         std::vector<size_t> channels = {0};
 
-        stream_ = {device_->setupStream(SOAPY_SDR_RX, soapy_format, channels), std::bind(&SoapySDR::Device::closeStream, device_, std::placeholders::_1)};
+        SoapySDR::Kwargs args;
+        if (device_->getDriverKey() == "RTLSDR") {
+            // some soapysdr builds have a very low default here
+            args["buffsize"] = "262144";
+        }
+
+        stream_ = {device_->setupStream(SOAPY_SDR_RX, soapy_format, channels, args), std::bind(&SoapySDR::Device::closeStream, device_, std::placeholders::_1)};
         if (!stream_) {
             throw std::runtime_error("failed to construct stream");
         }
