@@ -127,7 +127,7 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
 
     bool force_slow = (now - last.slow_report_time) > 300000;
 
-    if (!force_slow && (now - last.report_time) < minAge) {
+    if ((now - last.report_time) < minAge) {
         // Not this time.
         return;
     }
