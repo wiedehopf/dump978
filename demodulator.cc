@@ -200,8 +200,8 @@ namespace dump978 {
 
     // demodulate 'bytes' bytes from samples at 'phase' using 'center' as the bit
     // slicing threshold
-    static inline std::pair<Bytes,std::vector<std::size_t>> DemodBits(PhaseBuffer::const_iterator phase, unsigned bytes, std::int16_t zero_slice, std::int16_t one_slice) {
-        std::pair<Bytes,std::vector<std::size_t>> result_pair;
+    static inline std::pair<Bytes, std::vector<std::size_t>> DemodBits(PhaseBuffer::const_iterator phase, unsigned bytes, std::int16_t zero_slice, std::int16_t one_slice) {
+        std::pair<Bytes, std::vector<std::size_t>> result_pair;
         auto &result = result_pair.first;
         auto &erasures = result_pair.second;
 
