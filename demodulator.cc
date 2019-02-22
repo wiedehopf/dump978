@@ -63,7 +63,7 @@ namespace dump978 {
                 }
 
                 auto rssi = (total_power == 0 ? -1000 : 10 * std::log10(total_power / magsq.size()));
-                auto message_timestamp = timestamp + 1000 * (std::distance(phase_.cbegin(), message.begin) - previous_samples) / 2083333;
+                std::uint64_t message_timestamp = timestamp - (1000 * previous_samples / 2083333) + (1000 * std::distance(phase_.cbegin(), message.begin) / 2083333);
 
                 dispatch->emplace_back(std::move(message.payload), message_timestamp, message.corrected_errors, rssi);
             }
