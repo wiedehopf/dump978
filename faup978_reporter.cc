@@ -231,11 +231,11 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
 
     static std::map<AddressQualifier, std::string> idtype_map = {{AddressQualifier::ADSB_ICAO, "hexid"}, {AddressQualifier::TISB_ICAO, "hexid"}};
 
-    std::cout << value_map(aircraft.address_qualifier, idtype_map, "otherid") << '\t' << std::hex << std::uppercase << std::setfill('0') << std::setw(6) << aircraft.address << std::dec << std::nouppercase << std::setfill(' ') << '\t';
+    std::cout << value_map(aircraft.address_qualifier, idtype_map, "otherid") << '\t' << std::hex << std::uppercase << std::setfill('0') << std::setw(6) << aircraft.address << std::dec << std::nouppercase << std::setfill(' ');
 
     if (force_slow) {
         static std::map<AddressQualifier, std::string> qualifier_map = {{AddressQualifier::ADSB_ICAO, "adsb_icao"}, {AddressQualifier::ADSB_OTHER, "adsb_other"}, {AddressQualifier::TISB_ICAO, "tisb_icao"}, {AddressQualifier::TISB_OTHER, "tisb_other"}, {AddressQualifier::VEHICLE, "vehicle"}, {AddressQualifier::FIXED_BEACON, "fixed_beacon"}, {AddressQualifier::ADSR_OTHER, "adsr_other"}};
-        std::cout << "addrtype" << '\t' << value_map(aircraft.address_qualifier, qualifier_map, "unknown");
+        std::cout << '\t' << "addrtype" << '\t' << value_map(aircraft.address_qualifier, qualifier_map, "unknown");
     }
 
     for (const auto &entry : kv) {
