@@ -64,13 +64,18 @@ void Reporter::PeriodicReport() {
 }
 
 void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const AircraftState &aircraft, std::uint64_t now) {
-    // TISB_OTHER is generally worthless, don't bother with it.
     if (aircraft.address_qualifier == AddressQualifier::TISB_OTHER) {
+        // TISB_OTHER is generally worthless, don't bother with it.
         return;
     }
 
     auto &last = reported_[key];
     auto &last_state = last.report_state;
+
+    if (aircraft.last_message_time <= last.report_time) {
+        // no data received since last report
+        return;
+    }
 
     bool changed = false;
     changed |= (last_state.pressure_altitude && aircraft.pressure_altitude && std::abs(last_state.pressure_altitude.Value() - aircraft.pressure_altitude.Value()) >= 50);
