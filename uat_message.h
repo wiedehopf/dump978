@@ -154,7 +154,7 @@ namespace uat {
     typedef std::shared_ptr<MessageVector> SharedMessageVector;
 
     // 2.2.4.5.1.2 "ADDRESS QUALIFIER" field
-    enum class AddressQualifier : unsigned char { ADSB_ICAO = 0, ADSB_OTHER = 1, TISB_ICAO = 2, TISB_OTHER = 3, VEHICLE = 4, FIXED_BEACON = 5, ADSR_OTHER = 6, RESERVED_7 = 7 };
+    enum class AddressQualifier : unsigned char { ADSB_ICAO = 0, ADSB_OTHER = 1, TISB_ICAO = 2, TISB_TRACKFILE = 3, VEHICLE = 4, FIXED_BEACON = 5, ADSR_OTHER = 6, RESERVED_7 = 7 };
 
     // 2.2.4.5.2.5 "A/G STATE" field
     enum class AirGroundState : unsigned char { AIRBORNE_SUBSONIC = 0, AIRBORNE_SUPERSONIC = 1, ON_GROUND = 2, RESERVED = 3 };

@@ -271,7 +271,7 @@ namespace uat {
             break;
 
         case AddressQualifier::TISB_ICAO:
-        case AddressQualifier::TISB_OTHER:
+        case AddressQualifier::TISB_TRACKFILE:
         case AddressQualifier::ADSR_OTHER:
             tisb_site_id = raw.Bits(17, 5, 17, 8);
             break;
@@ -391,7 +391,7 @@ namespace uat {
     // converting decoded messages to json
     //
 
-    NLOHMANN_JSON_SERIALIZE_ENUM(AddressQualifier, {{AddressQualifier::ADSB_ICAO, "adsb_icao"}, {AddressQualifier::ADSB_OTHER, "adsb_other"}, {AddressQualifier::TISB_ICAO, "tisb_icao"}, {AddressQualifier::TISB_OTHER, "tisb_other"}, {AddressQualifier::VEHICLE, "vehicle"}, {AddressQualifier::ADSB_ICAO, "fixed_beacon"}, {AddressQualifier::ADSB_ICAO, "adsr_other"}, {AddressQualifier::RESERVED_7, "reserved_7"}});
+    NLOHMANN_JSON_SERIALIZE_ENUM(AddressQualifier, {{AddressQualifier::ADSB_ICAO, "adsb_icao"}, {AddressQualifier::ADSB_OTHER, "adsb_other"}, {AddressQualifier::TISB_ICAO, "tisb_icao"}, {AddressQualifier::TISB_TRACKFILE, "tisb_trackfile"}, {AddressQualifier::VEHICLE, "vehicle"}, {AddressQualifier::ADSB_ICAO, "fixed_beacon"}, {AddressQualifier::ADSB_ICAO, "adsr_other"}, {AddressQualifier::RESERVED_7, "reserved_7"}});
 
     NLOHMANN_JSON_SERIALIZE_ENUM(AirGroundState, {{AirGroundState::AIRBORNE_SUBSONIC, "airborne"}, {AirGroundState::AIRBORNE_SUPERSONIC, "supersonic"}, {AirGroundState::ON_GROUND, "ground"}, {AirGroundState::RESERVED, "reserved"}});
 

@@ -64,8 +64,8 @@ void Reporter::PeriodicReport() {
 }
 
 void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const AircraftState &aircraft, std::uint64_t now) {
-    if (aircraft.address_qualifier == AddressQualifier::TISB_OTHER) {
-        // TISB_OTHER is generally worthless, don't bother with it.
+    if (aircraft.address_qualifier == AddressQualifier::TISB_TRACKFILE) {
+        // TISB_TRACKFILE is generally worthless, don't bother with it.
         return;
     }
 
@@ -148,7 +148,7 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
 
     std::vector<std::pair<std::string, std::string>> kv;
 
-    static std::map<AddressQualifier, std::string> source_map = {{AddressQualifier::ADSB_ICAO, "A"}, {AddressQualifier::ADSB_OTHER, "A"}, {AddressQualifier::ADSR_OTHER, "A"}, {AddressQualifier::TISB_ICAO, "T"}, {AddressQualifier::TISB_OTHER, "T"}};
+    static std::map<AddressQualifier, std::string> source_map = {{AddressQualifier::ADSB_ICAO, "A"}, {AddressQualifier::ADSB_OTHER, "A"}, {AddressQualifier::ADSR_OTHER, "A"}, {AddressQualifier::TISB_ICAO, "T"}, {AddressQualifier::TISB_TRACKFILE, "T"}};
     std::string source = value_map(aircraft.address_qualifier, source_map, "?");
 
     auto add_slow_field = [&kv, &source, &last, force_slow](const std::string &k, const AgedFieldBase &f, std::function<void(std::ostream &)> stringize) {
@@ -234,7 +234,7 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
     std::cout << value_map(aircraft.address_qualifier, idtype_map, "otherid") << '\t' << std::hex << std::uppercase << std::setfill('0') << std::setw(6) << aircraft.address << std::dec << std::nouppercase << std::setfill(' ');
 
     if (force_slow) {
-        static std::map<AddressQualifier, std::string> qualifier_map = {{AddressQualifier::ADSB_ICAO, "adsb_icao"}, {AddressQualifier::ADSB_OTHER, "adsb_other"}, {AddressQualifier::TISB_ICAO, "tisb_icao"}, {AddressQualifier::TISB_OTHER, "tisb_other"}, {AddressQualifier::VEHICLE, "vehicle"}, {AddressQualifier::FIXED_BEACON, "fixed_beacon"}, {AddressQualifier::ADSR_OTHER, "adsr_other"}};
+        static std::map<AddressQualifier, std::string> qualifier_map = {{AddressQualifier::ADSB_ICAO, "adsb_icao"}, {AddressQualifier::ADSB_OTHER, "adsb_other"}, {AddressQualifier::TISB_ICAO, "tisb_icao"}, {AddressQualifier::TISB_TRACKFILE, "tisb_other"}, {AddressQualifier::VEHICLE, "vehicle"}, {AddressQualifier::FIXED_BEACON, "fixed_beacon"}, {AddressQualifier::ADSR_OTHER, "adsr_other"}};
         std::cout << '\t' << "addrtype" << '\t' << value_map(aircraft.address_qualifier, qualifier_map, "unknown");
     }
 
