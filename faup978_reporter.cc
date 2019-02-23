@@ -15,11 +15,15 @@ using namespace faup978;
 static const char *const TSV_VERSION = "4U";
 
 void Reporter::Start() {
+    tracker_->Start();
     std::cout << "tsv_version\t" << TSV_VERSION << std::endl;
     PeriodicReport();
 }
 
-void Reporter::Stop() { timer_.cancel(); }
+void Reporter::Stop() {
+    timer_.cancel();
+    tracker_->Stop();
+}
 
 template <typename T> static std::string value_map(T value, const std::map<T, std::string> &mappings, const std::string &default_value) {
     auto i = mappings.find(value);
