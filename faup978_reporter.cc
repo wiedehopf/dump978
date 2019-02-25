@@ -64,11 +64,6 @@ void Reporter::PeriodicReport() {
 }
 
 void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const AircraftState &aircraft, std::uint64_t now) {
-    if (aircraft.address_qualifier == AddressQualifier::TISB_TRACKFILE) {
-        // TISB_TRACKFILE is generally worthless, don't bother with it.
-        return;
-    }
-
     auto &last = reported_[key];
     auto &last_state = last.report_state;
 
