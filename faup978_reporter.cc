@@ -72,6 +72,17 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
         return;
     }
 
+    // If we have both TISB_ICAO and ADSB_ICAO, prefer the ADS-B data
+    if (aircraft.address_qualifier == AddressQualifier::TISB_ICAO) {
+        auto adsb = reported_.find({AddressQualifier::ADSB_ICAO, aircraft.address});
+        if (adsb != reported_.end() && adsb->second.report_time > 0) {
+            // we are reporting from direct ADS-B state, inhibit reporting TIS-B
+            // reset reporting times so that we do a full report if we later switch back to TIS-B
+            last.report_time = last.slow_report_time = 0;
+            return;
+        }
+    }
+
     bool changed = false;
     changed |= (last_state.pressure_altitude && aircraft.pressure_altitude && std::abs(last_state.pressure_altitude.Value() - aircraft.pressure_altitude.Value()) >= 50);
     changed |= (last_state.geometric_altitude && aircraft.geometric_altitude && std::abs(last_state.pressure_altitude.Value() - aircraft.pressure_altitude.Value()) >= 50);
