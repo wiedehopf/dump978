@@ -7,6 +7,7 @@
 #ifndef UAT_COMMON_H
 #define UAT_COMMON_H
 
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <vector>
@@ -19,6 +20,10 @@ namespace uat {
         const double scale = std::pow(10, dp);
         return std::round(value * scale) / scale;
     }
+
+    const auto unix_epoch = std::chrono::system_clock::from_time_t(0);
+
+    inline static std::uint64_t now_millis() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - unix_epoch).count(); }
 }; // namespace uat
 
 #endif
