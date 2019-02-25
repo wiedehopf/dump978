@@ -15,14 +15,35 @@ using namespace faup978;
 static const char *const TSV_VERSION = "4U";
 
 void Reporter::Start() {
-    tracker_->Start();
     std::cout << "tsv_version\t" << TSV_VERSION << std::endl;
     PeriodicReport();
+    PurgeOld();
 }
 
 void Reporter::Stop() {
-    timer_.cancel();
-    tracker_->Stop();
+    report_timer_.cancel();
+    purge_timer_.cancel();
+}
+
+void Reporter::PurgeOld() {
+    tracker_->PurgeOld();
+
+    auto &aircraft = tracker_->Aircraft();
+    for (auto i = reported_.begin(); i != reported_.end();) {
+        if (aircraft.count(i->first) == 0) {
+            i = reported_.erase(i);
+        } else {
+            ++i;
+        }
+    }
+
+    auto self(shared_from_this());
+    purge_timer_.expires_from_now(timeout_ / 4);
+    purge_timer_.async_wait(strand_.wrap([this, self](const boost::system::error_code &ec) {
+        if (!ec) {
+            PurgeOld();
+        }
+    }));
 }
 
 template <typename T> static std::string value_map(T value, const std::map<T, std::string> &mappings, const std::string &default_value) {
@@ -39,24 +60,15 @@ template <typename T> static std::function<void(std::ostream &)> simple_emit(con
 }
 
 void Reporter::PeriodicReport() {
-    static auto unix_epoch = std::chrono::system_clock::from_time_t(0);
-    const std::uint64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - unix_epoch).count();
+    const std::uint64_t now = now_millis();
 
     for (const auto &entry : tracker_->Aircraft()) {
         ReportOneAircraft(entry.first, entry.second, now);
     }
 
-    for (auto i = reported_.begin(); i != reported_.end();) {
-        if (tracker_->Aircraft().count(i->first) == 0) {
-            i = reported_.erase(i);
-        } else {
-            ++i;
-        }
-    }
-
     auto self(shared_from_this());
-    timer_.expires_from_now(interval_);
-    timer_.async_wait(strand_.wrap([this, self](const boost::system::error_code &ec) {
+    report_timer_.expires_from_now(interval_);
+    report_timer_.async_wait(strand_.wrap([this, self](const boost::system::error_code &ec) {
         if (!ec) {
             PeriodicReport();
         }
