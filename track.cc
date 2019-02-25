@@ -99,16 +99,12 @@ void AircraftState::UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &
 #undef UPDATE
 }
 
-void Tracker::Start() {
-    PurgeOld(); // starts timer
-}
+void Tracker::Start() { PurgeOld(); }
 
 void Tracker::Stop() { timer_.cancel(); }
 
 void Tracker::PurgeOld() {
-    static auto unix_epoch = std::chrono::system_clock::from_time_t(0);
-    auto expires = std::chrono::system_clock::now() - timeout_;
-    std::uint64_t expires_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(expires - unix_epoch).count();
+    std::uint64_t expires_timestamp = now_millis() - timeout_.count();
 
     for (auto i = aircraft_.begin(); i != aircraft_.end();) {
         if (i->second.last_message_time < expires_timestamp) {

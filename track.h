@@ -132,7 +132,7 @@ namespace uat {
         typedef std::shared_ptr<Tracker> Pointer;
         typedef std::map<AddressKey, AircraftState> MapType;
 
-        static Pointer Create(boost::asio::io_service &service, std::chrono::seconds timeout = std::chrono::seconds(300)) { return Pointer(new Tracker(service, timeout)); }
+        static Pointer Create(boost::asio::io_service &service, std::chrono::milliseconds timeout = std::chrono::seconds(300)) { return Pointer(new Tracker(service, timeout)); }
 
         void Start();
         void Stop();
@@ -140,16 +140,17 @@ namespace uat {
 
         const MapType &Aircraft() const { return aircraft_; }
 
-      private:
-        Tracker(boost::asio::io_service &service, std::chrono::seconds timeout) : service_(service), strand_(service), timer_(service), timeout_(timeout) {}
-
         void PurgeOld();
+
+      private:
+        Tracker(boost::asio::io_service &service, std::chrono::milliseconds timeout) : service_(service), strand_(service), timer_(service), timeout_(timeout) {}
+
         void HandleMessage(std::uint64_t at, const uat::AdsbMessage &message);
 
         boost::asio::io_service &service_;
         boost::asio::io_service::strand strand_;
         boost::asio::steady_timer timer_;
-        std::chrono::seconds timeout_;
+        std::chrono::milliseconds timeout_;
         MapType aircraft_;
     };
 }; // namespace uat
