@@ -79,7 +79,8 @@ namespace uat {
 
         AddressQualifier address_qualifier;
         AdsbAddress address;
-        std::uint64_t last_message_time;
+
+        std::uint64_t last_message_time = 0;
         std::uint32_t messages = 0;
 
         AgedField<std::pair<double, double>> position; // latitude, longitude

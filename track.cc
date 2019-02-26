@@ -10,6 +10,11 @@ using namespace uat;
 #include <iostream>
 
 void AircraftState::UpdateFromMessage(const uat::AdsbMessage &message) {
+    if (message.received_at < last_message_time) {
+        // Out of order message
+        return;
+    }
+
 #define UPDATE(x)                          \
     do {                                   \
         if (message.x) {                   \
@@ -94,7 +99,7 @@ void AircraftState::UpdateFromMessage(const uat::AdsbMessage &message) {
         horizontal_containment.MaybeUpdate(message.received_at, rc);
     }
 
-    last_message_time = std::max(last_message_time, message.received_at);
+    last_message_time = message.received_at;
     ++messages;
 
 #undef UPDATE
