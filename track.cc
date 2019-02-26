@@ -99,6 +99,7 @@ void AircraftState::UpdateFromMessage(const uat::AdsbMessage &message) {
         horizontal_containment.MaybeUpdate(message.received_at, rc);
     }
 
+    rssi[messages % rssi.size()] = message.rssi;
     last_message_time = message.received_at;
     ++messages;
 

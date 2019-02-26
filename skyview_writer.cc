@@ -184,7 +184,8 @@ void SkyviewWriter::PeriodicWrite() {
 
         ac_json["messages"] = aircraft.messages;
         ac_json["seen"] = (now - aircraft.last_message_time) / 1000.0;
-        ac_json["rssi"] = 0;
+
+        ac_json["rssi"] = aircraft.AverageRssi();
     }
 
     std::ofstream aircraft_file((dir_ / "aircraft.json").native());

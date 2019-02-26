@@ -9,6 +9,7 @@
 
 #include <chrono>
 #include <memory>
+#include <numeric>
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/steady_timer.hpp>
@@ -82,6 +83,7 @@ namespace uat {
 
         std::uint64_t last_message_time = 0;
         std::uint32_t messages = 0;
+        std::array<double,16> rssi;
 
         AgedField<std::pair<double, double>> position; // latitude, longitude
         AgedField<int> pressure_altitude;
@@ -128,6 +130,13 @@ namespace uat {
         AgedField<double> barometric_pressure_setting;
         AgedField<double> selected_heading;
         AgedField<ModeIndicators> mode_indicators;
+
+        double AverageRssi() const {
+            if (!messages)
+                return 0.0;
+
+            return std::accumulate(rssi.begin(), rssi.end(), 0.0) / std::min<double>(messages, rssi.size());
+        }
 
         void UpdateFromMessage(const uat::AdsbMessage &message);
     };
