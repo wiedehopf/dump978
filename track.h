@@ -144,6 +144,7 @@ namespace uat {
         void HandleMessages(SharedMessageVector messages);
 
         const MapType &Aircraft() const { return aircraft_; }
+        std::uint32_t TotalMessages() const { return total_messages_; }
 
         void PurgeOld();
 
@@ -157,6 +158,7 @@ namespace uat {
         boost::asio::steady_timer timer_;
         std::chrono::milliseconds timeout_;
         MapType aircraft_;
+        std::uint32_t total_messages_ = 0;
     };
 }; // namespace uat
 

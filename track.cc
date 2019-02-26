@@ -154,4 +154,5 @@ void Tracker::HandleMessage(std::uint64_t at, const uat::AdsbMessage &message) {
     }
 
     aircraft_[key].UpdateFromMessage(at, message);
+    ++total_messages_;
 }

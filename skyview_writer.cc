@@ -38,7 +38,7 @@ void SkyviewWriter::PeriodicWrite() {
     auto now = now_millis();
 
     aircraft_json["now"] = now / 1000.0;
-    aircraft_json["messages"] = 100; // TODO
+    aircraft_json["messages"] = tracker_->TotalMessages();
 
     auto &aircraft_list = aircraft_json["aircraft"] = json::array();
 
