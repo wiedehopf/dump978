@@ -74,7 +74,7 @@ namespace uat {
     };
 
     struct AircraftState {
-        AircraftState(AddressQualifier aq = AddressQualifier::INVALID, AdsbAddress ad = 0) : address_qualifier(aq), address(ad) {}
+        AircraftState(AddressQualifier aq = AddressQualifier::INVALID, AdsbAddress ad = 0) : address_qualifier(aq), address(ad) { rssi.fill(0.0); }
 
         AddressQualifier address_qualifier;
         AdsbAddress address;
