@@ -79,6 +79,10 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
     auto &last = reported_[key];
     auto &last_state = last.report_state;
 
+    if (aircraft.messages < 2) {
+        // possibly noise
+    }
+
     if (aircraft.last_message_time <= last.report_time) {
         // no data received since last report
         return;

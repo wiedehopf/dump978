@@ -45,6 +45,11 @@ void SkyviewWriter::PeriodicWrite() {
     for (const auto &entry : tracker_->Aircraft()) {
         auto &aircraft = entry.second;
 
+        if (aircraft.messages < 2) {
+            // possibly noise
+            continue;
+        }
+
         aircraft_list.emplace_back(json::object());
         auto &ac_json = aircraft_list.back();
 
