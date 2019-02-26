@@ -15,11 +15,11 @@ void AircraftState::UpdateFromMessage(const uat::AdsbMessage &message) {
         return;
     }
 
-#define UPDATE(x)                          \
-    do {                                   \
-        if (message.x) {                   \
+#define UPDATE(x)                                           \
+    do {                                                    \
+        if (message.x) {                                    \
             x.MaybeUpdate(message.received_at, *message.x); \
-        }                                  \
+        }                                                   \
     } while (0)
 
     UPDATE(position); // latitude, longitude

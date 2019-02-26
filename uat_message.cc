@@ -487,6 +487,7 @@ namespace uat {
         EMIT(selected_heading);
 
         if (mode_indicators) {
+            // clang-format off
             o["mode_indicators"] = {
                 { "autopilot", mode_indicators->autopilot },
                 { "vnav", mode_indicators->vnav },
@@ -494,15 +495,18 @@ namespace uat {
                 { "approach", mode_indicators->approach },
                 { "lnav", mode_indicators->lnav }
             };
+            // clang-format on
         }
 
 #undef EMIT
 
+        // clang-format off
         o["metadata"] = {
             { "received_at", received_at / 1000.0 },
             { "rssi", RoundN(rssi, 1) },
             { "errors", errors }
         };
+        // clang-format on
 
         return o;
     }
