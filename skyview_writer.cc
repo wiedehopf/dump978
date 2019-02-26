@@ -185,11 +185,11 @@ void SkyviewWriter::PeriodicWrite() {
         ac_json["messages"] = aircraft.messages;
         ac_json["seen"] = (now - aircraft.last_message_time) / 1000.0;
 
-        ac_json["rssi"] = aircraft.AverageRssi();
+        ac_json["rssi"] = RoundN(aircraft.AverageRssi(), 1);
     }
 
     std::ofstream aircraft_file((dir_ / "aircraft.json").native());
-    aircraft_file << std::setw(4) << aircraft_json << std::endl;
+    aircraft_file << aircraft_json << std::endl;
     aircraft_file.close();
 
     std::cerr << "wrote " << tracker_->Aircraft().size() << " entries" << std::endl;
