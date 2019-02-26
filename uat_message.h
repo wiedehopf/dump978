@@ -211,6 +211,11 @@ namespace uat {
     struct AdsbMessage {
         AdsbMessage(const RawMessage &raw);
 
+        // Metadata copied from the raw message
+        std::uint64_t received_at;
+        unsigned errors;
+        float rssi;
+
         // 2.2.4.5 HEADER Element
         unsigned payload_type;
         AddressQualifier address_qualifier;

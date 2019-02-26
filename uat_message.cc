@@ -58,6 +58,11 @@ namespace uat {
             throw std::logic_error("can't parse this sort of message as a downlink ADS-B message");
         }
 
+        // Metadata
+        received_at = raw.ReceivedAt();
+        errors = raw.Errors();
+        rssi = raw.Rssi();
+
         // HDR
         payload_type = raw.Bits(1, 1, 1, 5);
         address_qualifier = static_cast<AddressQualifier>(raw.Bits(1, 6, 1, 8));
@@ -482,15 +487,22 @@ namespace uat {
         EMIT(selected_heading);
 
         if (mode_indicators) {
-            auto &mi = o["mode_indicators"] = nlohmann::json::object();
-            mi["autopilot"] = mode_indicators->autopilot;
-            mi["vnav"] = mode_indicators->vnav;
-            mi["altitude_hold"] = mode_indicators->altitude_hold;
-            mi["approach"] = mode_indicators->approach;
-            mi["lnav"] = mode_indicators->lnav;
+            o["mode_indicators"] = {
+                { "autopilot", mode_indicators->autopilot },
+                { "vnav", mode_indicators->vnav },
+                { "altitude_hold", mode_indicators->altitude_hold },
+                { "approach", mode_indicators->approach },
+                { "lnav", mode_indicators->lnav }
+            };
         }
 
 #undef EMIT
+
+        o["metadata"] = {
+            { "received_at", received_at / 1000.0 },
+            { "rssi", RoundN(rssi, 1) },
+            { "errors", errors }
+        };
 
         return o;
     }
