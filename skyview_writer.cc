@@ -112,8 +112,9 @@ void SkyviewWriter::PeriodicWrite() {
             ac_json["track"] = aircraft.true_track.Value();
         }
         if (aircraft.emitter_category) {
+            unsigned as_hex = 0xA0 + (aircraft.emitter_category.Value() & 7) + ((aircraft.emitter_category.Value() & 0xF8) << 4);
             std::ostringstream os;
-            os << std::hex << std::setfill('0') << std::setw(2) << std::uppercase << (aircraft.emitter_category.Value() + 0xA0);
+            os << std::hex << std::setfill('0') << std::setw(2) << std::uppercase << as_hex;
             ac_json["category"] = os.str();
         }
         if (aircraft.callsign) {

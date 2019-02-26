@@ -200,8 +200,10 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
     };
 
     add_slow_field("adsb_version", aircraft.mops_version, simple_emit(aircraft.mops_version));
-    add_slow_field("category", aircraft.emitter_category, [&aircraft](std::ostream &os) { os << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << (aircraft.emitter_category.Value() + 0xA0); });
-
+    add_slow_field("category", aircraft.emitter_category, [&aircraft](std::ostream &os) {
+        unsigned as_hex = 0xA0 + (aircraft.emitter_category.Value() & 7) + ((aircraft.emitter_category.Value() & 0xF8) << 4);
+        os << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << as_hex;
+    });
     add_slow_aged_field("nac_p", aircraft.nac_p, simple_emit(aircraft.nac_p));
     add_slow_aged_field("nac_v", aircraft.nac_v, simple_emit(aircraft.nac_v));
     add_slow_aged_field("sil", aircraft.sil, simple_emit(aircraft.sil));
