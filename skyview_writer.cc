@@ -196,8 +196,6 @@ void SkyviewWriter::PeriodicWrite() {
     aircraft_file.close();
     boost::filesystem::rename(temp_path, target_path);
 
-    std::cerr << "wrote " << tracker_->Aircraft().size() << " entries" << std::endl;
-
     auto self(shared_from_this());
     timer_.expires_from_now(interval_);
     timer_.async_wait(strand_.wrap([this, self](const boost::system::error_code &ec) {
