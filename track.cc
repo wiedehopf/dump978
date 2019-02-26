@@ -9,11 +9,11 @@ using namespace uat;
 #include <iomanip>
 #include <iostream>
 
-void AircraftState::UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &message) {
+void AircraftState::UpdateFromMessage(const uat::AdsbMessage &message) {
 #define UPDATE(x)                          \
     do {                                   \
         if (message.x) {                   \
-            x.MaybeUpdate(at, *message.x); \
+            x.MaybeUpdate(message.received_at, *message.x); \
         }                                  \
     } while (0)
 
@@ -91,10 +91,10 @@ void AircraftState::UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &
                 rc = i->second;
         }
 
-        horizontal_containment.MaybeUpdate(at, rc);
+        horizontal_containment.MaybeUpdate(message.received_at, rc);
     }
 
-    last_message_time = std::max(last_message_time, at);
+    last_message_time = std::max(last_message_time, message.received_at);
     ++messages;
 
 #undef UPDATE
@@ -140,19 +140,19 @@ void Tracker::HandleMessages(SharedMessageVector messages) {
                 continue;
             }
             if (message.Type() == MessageType::DOWNLINK_SHORT || message.Type() == MessageType::DOWNLINK_LONG) {
-                HandleMessage(message.ReceivedAt(), AdsbMessage(message));
+                HandleMessage(AdsbMessage(message));
             }
         }
     });
 }
 
-void Tracker::HandleMessage(std::uint64_t at, const uat::AdsbMessage &message) {
+void Tracker::HandleMessage(const uat::AdsbMessage &message) {
     AddressKey key{message.address_qualifier, message.address};
     auto i = aircraft_.find(key);
     if (i == aircraft_.end()) {
         aircraft_[key] = {message.address_qualifier, message.address};
     }
 
-    aircraft_[key].UpdateFromMessage(at, message);
+    aircraft_[key].UpdateFromMessage(message);
     ++total_messages_;
 }

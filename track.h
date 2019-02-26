@@ -128,7 +128,7 @@ namespace uat {
         AgedField<double> selected_heading;
         AgedField<ModeIndicators> mode_indicators;
 
-        void UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &message);
+        void UpdateFromMessage(const uat::AdsbMessage &message);
     };
 
     class Tracker : public std::enable_shared_from_this<Tracker> {
@@ -151,7 +151,7 @@ namespace uat {
       private:
         Tracker(boost::asio::io_service &service, std::chrono::milliseconds timeout) : service_(service), strand_(service), timer_(service), timeout_(timeout) {}
 
-        void HandleMessage(std::uint64_t at, const uat::AdsbMessage &message);
+        void HandleMessage(const uat::AdsbMessage &message);
 
         boost::asio::io_service &service_;
         boost::asio::io_service::strand strand_;
