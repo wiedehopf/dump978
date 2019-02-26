@@ -188,9 +188,13 @@ void SkyviewWriter::PeriodicWrite() {
         ac_json["rssi"] = RoundN(aircraft.AverageRssi(), 1);
     }
 
-    std::ofstream aircraft_file((dir_ / "aircraft.json").native());
+    auto temp_path = dir_ / "aircraft.json.new";
+    auto target_path = dir_ / "aircraft.json";
+
+    std::ofstream aircraft_file(temp_path.native());
     aircraft_file << aircraft_json << std::endl;
     aircraft_file.close();
+    boost::filesystem::rename(temp_path, target_path);
 
     std::cerr << "wrote " << tracker_->Aircraft().size() << " entries" << std::endl;
 
