@@ -83,6 +83,10 @@ static int realmain(int argc, char **argv) {
 
     auto tracker = Tracker::Create(io_service);
     input->SetConsumer(std::bind(&Tracker::HandleMessages, tracker, std::placeholders::_1));
+    input->SetErrorHandler([&io_service](const boost::system::error_code &ec) {
+        std::cerr << "Connection failed: " << ec.message() << std::endl;
+        io_service.stop();
+    });
 
     auto dir = opts["json-dir"].as<std::string>();
     auto writer = SkyviewWriter::Create(io_service, tracker, dir, std::chrono::milliseconds(1000));

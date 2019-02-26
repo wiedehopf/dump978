@@ -19,11 +19,14 @@ namespace uat {
     class RawInput : public MessageSource, public std::enable_shared_from_this<RawInput> {
       public:
         typedef std::shared_ptr<RawInput> Pointer;
+        typedef std::function<void(const boost::system::error_code &)> ErrorHandler;
 
         static Pointer Create(boost::asio::io_service &service, const std::string &host, const std::string &port_or_service) { return Pointer(new RawInput(service, host, port_or_service)); }
 
         void Start();
         void Stop();
+
+        void SetErrorHandler(ErrorHandler handler) { error_handler_ = handler; }
 
       private:
         RawInput(boost::asio::io_service &service, const std::string &host, const std::string &port_or_service);
@@ -41,6 +44,8 @@ namespace uat {
         boost::asio::ip::tcp::resolver resolver_;
         boost::asio::ip::tcp::socket socket_;
         boost::asio::ip::tcp::resolver::iterator next_endpoint_;
+
+        ErrorHandler error_handler_;
 
         std::vector<char> readbuf_;
         std::size_t used_;

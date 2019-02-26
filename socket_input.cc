@@ -77,8 +77,11 @@ void RawInput::HandleError(const boost::system::error_code &ec) {
     if (ec == boost::asio::error::operation_aborted) {
         return;
     }
-    // I .. guess we should do something here, huh?
-    std::cerr << ec.message() << std::endl;
+    if (error_handler_) {
+        error_handler_(ec);
+    } else {
+        throw std::runtime_error(ec.message());
+    }
     socket_.close();
 }
 

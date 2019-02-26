@@ -73,6 +73,10 @@ static int realmain(int argc, char **argv) {
     auto reporter = Reporter::Create(io_service);
 
     input->SetConsumer(std::bind(&Reporter::HandleMessages, reporter, std::placeholders::_1));
+    input->SetErrorHandler([&io_service](const boost::system::error_code &ec) {
+        std::cerr << "Connection failed: " << ec.message() << std::endl;
+        io_service.stop();
+    });
 
     reporter->Start();
     input->Start();
