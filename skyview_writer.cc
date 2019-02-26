@@ -177,7 +177,7 @@ void SkyviewWriter::PeriodicWrite() {
             ac_json["rc"] = aircraft.horizontal_containment.Value();
         }
 
-        ac_json["messages"] = 10;
+        ac_json["messages"] = aircraft.messages;
         ac_json["seen"] = (now - aircraft.last_message_time) / 1000.0;
         ac_json["rssi"] = 0;
     }

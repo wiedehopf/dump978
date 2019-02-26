@@ -73,9 +73,14 @@ namespace uat {
     };
 
     struct AircraftState {
+        AircraftState(AddressQualifier aq = AddressQualifier::INVALID, AdsbAddress ad = 0)
+            : address_qualifier(aq), address(ad)
+        {}
+
         AddressQualifier address_qualifier;
         AdsbAddress address;
         std::uint64_t last_message_time;
+        std::uint32_t messages = 0;
 
         AgedField<std::pair<double, double>> position; // latitude, longitude
         AgedField<int> pressure_altitude;

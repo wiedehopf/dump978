@@ -95,6 +95,7 @@ void AircraftState::UpdateFromMessage(std::uint64_t at, const uat::AdsbMessage &
     }
 
     last_message_time = std::max(last_message_time, at);
+    ++messages;
 
 #undef UPDATE
 }
