@@ -19,7 +19,7 @@ using namespace uat::skyview;
 void SkyviewWriter::Start() {
     nlohmann::json receiver_json;
 
-    receiver_json["version"] = "dump978-WIP";
+    receiver_json["version"] = "dump978 " VERSION;
     receiver_json["refresh"] = interval_.count();
     receiver_json["history"] = history_count_;
 
