@@ -8,8 +8,8 @@ After=network.target
 After=dump978-fa.target
 
 [Service]
-EnvironmentFile=/etc/default/dump978-fa
-User=skyview978
+EnvironmentFile=/etc/default/skyview978
+User=skyview
 RuntimeDirectory=skyview978
 RuntimeDirectoryMode=0755
 ExecStart=/usr/bin/skyview978 $NET_OPTIONS --json-dir /run/skyview978

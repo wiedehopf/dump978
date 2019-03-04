@@ -18,7 +18,7 @@ set -e
 # the debian-policy package
 
 NAME=skyview978
-RUNAS=skyview978
+RUNAS=skyview
 
 case "$1" in
     configure)
