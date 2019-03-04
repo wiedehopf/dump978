@@ -1,0 +1,21 @@
+# skyview978 service for systemd
+
+[Unit]
+Description=skyview978 ADS-B UAT web display
+Documentation=https://flightaware.com/adsb/piaware/
+Wants=network.target
+After=network.target
+After=dump978-fa.target
+
+[Service]
+EnvironmentFile=/etc/default/dump978-fa
+User=skyview978
+RuntimeDirectory=skyview978
+RuntimeDirectoryMode=0755
+ExecStart=/usr/bin/skyview978 $NET_OPTIONS --json-dir /run/skyview978
+Type=simple
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=dump978-fa.target

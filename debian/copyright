@@ -1,0 +1,109 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: dump978
+Upstream-Contact: Oliver Jowett <oliver.jowett@flightaware.com>
+Source: https://github.com/flightaware/dump978
+
+Files: *.cc *.h
+Copyright: Copyright 2015 Oliver Jowett <oliver@mutability.co.uk>
+           Copyright 2019 FlightAware LLC
+License: BSD-2-Clause
+
+Files: libs/json.hpp
+Copyright: Copyright (c) 2013-2018 Niels Lohmann <http://nlohmann.me>.
+License: MIT
+
+Files: libs/fec/*
+Copyright: copyright 2006 by Phil Karn, KA9Q
+License: LGPL-2
+
+Files: public_html/coolclock/*
+Copyright: Copyright 2010, Simon Baird
+License: BSD-3-Clause
+Comment: 3-clause clarified with https://github.com/simonbaird/CoolClock/blob/a3e6d1a6fcf9d5bfd81d862d91d83a3892cb6923/LICENSE
+
+Files: public_html/coolclock/excanvas.js
+Copyright: Copyright 2006 Google Inc.
+License: Apache-2.0
+
+Files: public_html/flags-tiny/*
+Copyright: Gang of the Coconuts
+License: CC-BY-SA-3.0
+
+Files: public_html/markers.js
+Copyright: Kaboldy
+           Icons made by Freepik
+License: CC-BY-SA-3.0 and CC-BY-3.0
+Comment: _generic_plane_svg was added with https://github.com/mutability/dump1090/commit/5f0e295580c34da34ecef3a37f03e9a9d57485ff
+ https://github.com/DE8MSH
+
+Files: public_html/jquery/*
+Copyright: 2015 jQuery Foundation and other contributors
+License: MIT
+Source: http://www.jquery.com/
+
+Files: public_html/ol3/ol-3.17.1.css public_html/ol3/ol-3.17.1.js
+Copyright: 2005-2016 OpenLayers Contributors
+License: BSD-2-Clause-OpenLayers
+Source: http://openlayers.org
+
+Files: public_html/ol3/ol3-layerswitcher.js public_html/ol3/ol3-layerswitcher.css
+Copyright: Matt Walker
+License: MIT
+Source: https://github.com/walkermatt/ol3-layerswitcher
+
+License: BSD-2-Clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+ .
+ * Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+ .
+ * Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+License: MIT
+ Permission is hereby granted, free of charge, to any person obtaining
+ a copy of this software and associated documentation files (the
+ "Software"), to deal in the Software without restriction, including
+ without limitation the rights to use, copy, modify, merge, publish,
+ distribute, sublicense, and/or sell copies of the Software, and to
+ permit persons to whom the Software is furnished to do so, subject to
+ the following conditions:
+ .
+ The above copyright notice and this permission notice shall be included
+ in all copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+License: LGPL-2
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Library General Public
+ License as published by the Free Software Foundation; either
+ version 2 of the License, or (at your option) any later version.
+ .
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Library General Public License for more details.
+ .
+ You should have received a copy of the GNU Library General Public
+ License along with this library; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA

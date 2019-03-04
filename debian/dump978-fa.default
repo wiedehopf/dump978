@@ -1,0 +1,6 @@
+# dump978-fa configuration
+# This is read by the systemd service file as an environment file
+
+RECEIVER_OPTIONS="--sdr 'driver=rtlsdr' --format CS8"
+DECODER_OPTIONS=""
+NET_OPTIONS="--raw-port 30978 --json-port 30979"

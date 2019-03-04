@@ -1,0 +1,4 @@
+# skyview978 configuration
+# This is read by the systemd service file as an environment file
+
+NET_OPTIONS="--connect localhost:30978"
