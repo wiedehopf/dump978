@@ -69,9 +69,21 @@ void validate(boost::any &v, const std::vector<std::string> &values, format_opti
 static int realmain(int argc, char **argv) {
     boost::asio::io_service io_service;
 
+    // clang-format off
     po::options_description desc("Allowed options");
-    desc.add_options()("help", "produce help message")("raw-stdout", "write raw messages to stdout")("json-stdout", "write decoded json to stdout")("format", po::value<format_option>()->default_value({SampleFormat::CU8}, "CU8"), "set sample format")("stdin", "read sample data from stdin")("file", po::value<std::string>(), "read sample data from a file")("file-throttle", "throttle file input to realtime")("sdr", po::value<std::string>(), "read sample data from named SDR device")(
-        "raw-port", po::value<std::vector<listen_option>>(), "listen for connections on [host:]port and provide raw messages")("json-port", po::value<std::vector<listen_option>>(), "listen for connections on [host:]port and provide decoded json");
+    desc.add_options()
+        ("help", "produce help message")
+        ("version", "show version")
+        ("raw-stdout", "write raw messages to stdout")
+        ("json-stdout", "write decoded json to stdout")
+        ("format", po::value<format_option>()->default_value({SampleFormat::CU8}, "CU8"), "set sample format")
+        ("stdin", "read sample data from stdin")
+        ("file", po::value<std::string>(), "read sample data from a file")
+        ("file-throttle", "throttle file input to realtime")
+        ("sdr", po::value<std::string>(), "read sample data from named SDR device")
+        ("raw-port", po::value<std::vector<listen_option>>(), "listen for connections on [host:]port and provide raw messages")
+        ("json-port", po::value<std::vector<listen_option>>(), "listen for connections on [host:]port and provide decoded json");
+    // clang-format on
 
     po::variables_map opts;
 
@@ -85,7 +97,13 @@ static int realmain(int argc, char **argv) {
     }
 
     if (opts.count("help")) {
+        std::cerr << "dump978-fa " << VERSION << std::endl;
         std::cerr << desc << std::endl;
+        return EXIT_NO_RESTART;
+    }
+
+    if (opts.count("version")) {
+        std::cerr << "dump978-fa " << VERSION << std::endl;
         return EXIT_NO_RESTART;
     }
 

@@ -1,3 +1,8 @@
+VERSION ?= $(shell git rev-parse --short HEAD)
+ifneq ($(VERSION),)
+  CPPFLAGS+=-DVERSION=\"$(VERSION)\"
+endif
+
 CC=gcc
 CFLAGS+=-Wall -Werror -O2 -g -Ilibs
 

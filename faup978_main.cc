@@ -44,8 +44,13 @@ void validate(boost::any &v, const std::vector<std::string> &values, connect_opt
 static int realmain(int argc, char **argv) {
     boost::asio::io_service io_service;
 
+    // clang-format off
     po::options_description desc("Allowed options");
-    desc.add_options()("help", "produce help message")("connect", po::value<connect_option>(), "connect to host:port for raw UAT data");
+    desc.add_options()
+        ("help", "produce help message")
+        ("version", "show version")
+        ("connect", po::value<connect_option>(), "connect to host:port for raw UAT data");
+    // clang-format on
 
     po::variables_map opts;
 
@@ -59,7 +64,13 @@ static int realmain(int argc, char **argv) {
     }
 
     if (opts.count("help")) {
+        std::cerr << "faup978 " << VERSION << std::endl;
         std::cerr << desc << std::endl;
+        return EXIT_NO_RESTART;
+    }
+
+    if (opts.count("version")) {
+        std::cerr << "faup978 " << VERSION << std::endl;
         return EXIT_NO_RESTART;
     }
 

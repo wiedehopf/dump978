@@ -7,6 +7,10 @@
 #ifndef UAT_COMMON_H
 #define UAT_COMMON_H
 
+#ifndef VERSION
+#define VERSION "unknown version compiled " __DATE__ " " __TIME__
+#endif
+
 #include <chrono>
 #include <cmath>
 #include <cstdint>

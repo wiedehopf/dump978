@@ -48,6 +48,7 @@ static int realmain(int argc, char **argv) {
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help", "produce help message")
+        ("version", "show version")
         ("connect", po::value<connect_option>(), "connect to host:port for raw UAT data")
         ("json-dir", po::value<std::string>(), "write json files to given directory");
     // clang-format on
@@ -64,7 +65,13 @@ static int realmain(int argc, char **argv) {
     }
 
     if (opts.count("help")) {
+        std::cerr << "skyview978 " << VERSION << std::endl;
         std::cerr << desc << std::endl;
+        return EXIT_NO_RESTART;
+    }
+
+    if (opts.count("version")) {
+        std::cerr << "skyview978 " << VERSION << std::endl;
         return EXIT_NO_RESTART;
     }
 
