@@ -50,7 +50,9 @@ static int realmain(int argc, char **argv) {
         ("help", "produce help message")
         ("version", "show version")
         ("connect", po::value<connect_option>(), "connect to host:port for raw UAT data")
-        ("json-dir", po::value<std::string>(), "write json files to given directory");
+        ("json-dir", po::value<std::string>(), "write json files to given directory")
+        ("history-count", po::value<unsigned>()->default_value(120), "number of history files to maintain")
+        ("history-interval", po::value<unsigned>()->default_value(30), "interval between history files (seconds)");
     // clang-format on
 
     po::variables_map opts;
@@ -96,7 +98,7 @@ static int realmain(int argc, char **argv) {
     });
 
     auto dir = opts["json-dir"].as<std::string>();
-    auto writer = SkyviewWriter::Create(io_service, tracker, dir, std::chrono::milliseconds(1000));
+    auto writer = SkyviewWriter::Create(io_service, tracker, dir, std::chrono::milliseconds(1000), opts["history-count"].as<unsigned>(), std::chrono::milliseconds(opts["history-interval"].as<unsigned>() * 1000));
 
     writer->Start();
     tracker->Start();

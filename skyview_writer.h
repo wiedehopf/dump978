@@ -24,13 +24,13 @@ namespace uat {
           public:
             typedef std::shared_ptr<SkyviewWriter> Pointer;
 
-            static Pointer Create(boost::asio::io_service &service, Tracker::Pointer tracker, const boost::filesystem::path &dir, std::chrono::milliseconds interval) { return Pointer(new SkyviewWriter(service, tracker, dir, interval)); }
+            static Pointer Create(boost::asio::io_service &service, Tracker::Pointer tracker, const boost::filesystem::path &dir, std::chrono::milliseconds interval, unsigned history_count, std::chrono::milliseconds history_interval) { return Pointer(new SkyviewWriter(service, tracker, dir, interval, history_count, history_interval)); }
 
             void Start();
             void Stop();
 
           private:
-            SkyviewWriter(boost::asio::io_service &service, Tracker::Pointer tracker, const boost::filesystem::path &dir, std::chrono::milliseconds interval) : service_(service), strand_(service), timer_(service), tracker_(tracker), dir_(dir), interval_(interval) {}
+            SkyviewWriter(boost::asio::io_service &service, Tracker::Pointer tracker, const boost::filesystem::path &dir, std::chrono::milliseconds interval, unsigned history_count, std::chrono::milliseconds history_interval) : service_(service), strand_(service), timer_(service), tracker_(tracker), dir_(dir), interval_(interval), history_count_(history_count), history_interval_(history_interval) {}
 
             void PeriodicWrite();
 
@@ -40,6 +40,10 @@ namespace uat {
             uat::Tracker::Pointer tracker_;
             boost::filesystem::path dir_;
             std::chrono::milliseconds interval_;
+            unsigned history_count_;
+            std::chrono::milliseconds history_interval_;
+            unsigned next_history_index_ = 0;
+            std::uint64_t next_history_time_ = 0;
         };
     } // namespace skyview
 } // namespace uat

@@ -21,7 +21,7 @@ void SkyviewWriter::Start() {
 
     receiver_json["version"] = "dump978-WIP";
     receiver_json["refresh"] = interval_.count();
-    receiver_json["history"] = 1;
+    receiver_json["history"] = history_count_;
 
     std::ofstream receiver_file((dir_ / "receiver.json").native());
     receiver_file << std::setw(4) << receiver_json << std::endl;
@@ -196,6 +196,19 @@ void SkyviewWriter::PeriodicWrite() {
     aircraft_file << aircraft_json << std::endl;
     aircraft_file.close();
     boost::filesystem::rename(temp_path, target_path);
+
+    if (next_history_time_ <= now) {
+        auto temp_history_path = dir_ / "history.json.new";
+        auto history_path = dir_ / ("history_" + std::to_string(next_history_index_) + ".json");
+
+        std::ofstream history_file(temp_history_path.native());
+        history_file << aircraft_json << std::endl;
+        history_file.close();
+        boost::filesystem::rename(temp_history_path, history_path);
+
+        next_history_index_ = (next_history_index_ + 1) % history_count_;
+        next_history_time_ = now + history_interval_.count();
+    }
 
     auto self(shared_from_this());
     timer_.expires_from_now(interval_);
