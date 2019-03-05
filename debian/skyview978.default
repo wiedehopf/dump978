@@ -1,5 +1,5 @@
 # skyview978 configuration
 # This is read by the systemd service file as an environment file
 
-NET_OPTIONS="--connect localhost:30978"
+NET_OPTIONS="--connect localhost:30978 --reconnect-interval 30"
 HISTORY_OPTIONS="--history-count 120 --history-interval 30"
