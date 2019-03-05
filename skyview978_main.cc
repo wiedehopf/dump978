@@ -52,7 +52,9 @@ static int realmain(int argc, char **argv) {
         ("connect", po::value<connect_option>(), "connect to host:port for raw UAT data")
         ("json-dir", po::value<std::string>(), "write json files to given directory")
         ("history-count", po::value<unsigned>()->default_value(120), "number of history files to maintain")
-        ("history-interval", po::value<unsigned>()->default_value(30), "interval between history files (seconds)");
+        ("history-interval", po::value<unsigned>()->default_value(30), "interval between history files (seconds)")
+        ("lat", po::value<unsigned>(), "latitude of receiver")
+        ("lon", po::value<unsigned>(), "longitude of receiver");
     // clang-format on
 
     po::variables_map opts;
@@ -97,8 +99,13 @@ static int realmain(int argc, char **argv) {
         io_service.stop();
     });
 
+    boost::optional<std::pair<double, double>> location = boost::none;
+    if (opts.count("lat") && opts.count("lon")) {
+        location.emplace(opts["lat"].as<double>(), opts["lon"].as<double>());
+    }
+
     auto dir = opts["json-dir"].as<std::string>();
-    auto writer = SkyviewWriter::Create(io_service, tracker, dir, std::chrono::milliseconds(1000), opts["history-count"].as<unsigned>(), std::chrono::milliseconds(opts["history-interval"].as<unsigned>() * 1000));
+    auto writer = SkyviewWriter::Create(io_service, tracker, dir, std::chrono::milliseconds(1000), opts["history-count"].as<unsigned>(), std::chrono::milliseconds(opts["history-interval"].as<unsigned>() * 1000), location);
 
     writer->Start();
     tracker->Start();

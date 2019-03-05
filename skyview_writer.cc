@@ -23,6 +23,11 @@ void SkyviewWriter::Start() {
     receiver_json["refresh"] = interval_.count();
     receiver_json["history"] = history_count_;
 
+    if (location_) {
+        receiver_json["lat"] = RoundN(location_->first, 4);
+        receiver_json["lon"] = RoundN(location_->second, 4);
+    }
+
     std::ofstream receiver_file((dir_ / "receiver.json").native());
     receiver_file << std::setw(4) << receiver_json << std::endl;
 
