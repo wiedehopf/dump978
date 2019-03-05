@@ -9,11 +9,12 @@ using boost::asio::ip::tcp;
 
 #include <iostream>
 
-RawInput::RawInput(boost::asio::io_service &service, const std::string &host, const std::string &port_or_service) : service_(service), host_(host), port_or_service_(port_or_service), resolver_(service), socket_(service), used_(0) { readbuf_.resize(8192); }
+RawInput::RawInput(boost::asio::io_service &service, const std::string &host, const std::string &port_or_service, std::chrono::milliseconds reconnect_interval) : service_(service), host_(host), port_or_service_(port_or_service), reconnect_interval_(reconnect_interval), resolver_(service), socket_(service), reconnect_timer_(service), used_(0) { readbuf_.resize(8192); }
 
 void RawInput::Start() {
     auto self(shared_from_this());
 
+    std::cerr << "Connecting to " << host_ << ":" << port_or_service_ << std::endl;
     tcp::resolver::query query(host_, port_or_service_);
     resolver_.async_resolve(query, [this, self](const boost::system::error_code &ec, tcp::resolver::iterator it) {
         if (!ec) {
@@ -28,7 +29,10 @@ void RawInput::Start() {
     });
 }
 
-void RawInput::Stop() { socket_.close(); }
+void RawInput::Stop() {
+    reconnect_timer_.cancel();
+    socket_.close();
+}
 
 void RawInput::TryNextEndpoint(const boost::system::error_code &last_error) {
     if (next_endpoint_ == tcp::resolver::iterator()) {
@@ -77,12 +81,24 @@ void RawInput::HandleError(const boost::system::error_code &ec) {
     if (ec == boost::asio::error::operation_aborted) {
         return;
     }
+    socket_.close();
+
+    if (reconnect_interval_.count() > 0) {
+        // do this before calling the error handler, so the error handler has the option
+        // of calling Stop() and cancelling the reconnect timer
+
+        auto self(shared_from_this());
+
+        reconnect_timer_.expires_from_now(reconnect_interval_);
+        reconnect_timer_.async_wait([this, self](const boost::system::error_code &ec) {
+            if (!ec)
+                Start();
+        });
+    }
+
     if (error_handler_) {
         error_handler_(ec);
-    } else {
-        throw std::runtime_error(ec.message());
     }
-    socket_.close();
 }
 
 void RawInput::ParseBuffer() {
