@@ -50,6 +50,7 @@ static int realmain(int argc, char **argv) {
         ("help", "produce help message")
         ("version", "show version")
         ("connect", po::value<connect_option>(), "connect to host:port for raw UAT data")
+        ("reconnect-interval", po::value<unsigned>()->default_value(0), "on connection failure, attempt to reconnect after this interval (seconds); 0 disables")
         ("json-dir", po::value<std::string>(), "write json files to given directory")
         ("history-count", po::value<unsigned>()->default_value(120), "number of history files to maintain")
         ("history-interval", po::value<unsigned>()->default_value(30), "interval between history files (seconds)")
@@ -90,13 +91,16 @@ static int realmain(int argc, char **argv) {
     }
 
     auto connect = opts["connect"].as<connect_option>();
-    auto input = RawInput::Create(io_service, connect.host, connect.port);
+    auto reconnect_interval = opts["reconnect-interval"].as<unsigned>();
+    auto input = RawInput::Create(io_service, connect.host, connect.port, std::chrono::milliseconds(reconnect_interval * 1000));
 
     auto tracker = Tracker::Create(io_service);
     input->SetConsumer(std::bind(&Tracker::HandleMessages, tracker, std::placeholders::_1));
-    input->SetErrorHandler([&io_service](const boost::system::error_code &ec) {
+    input->SetErrorHandler([&io_service, reconnect_interval](const boost::system::error_code &ec) {
         std::cerr << "Connection failed: " << ec.message() << std::endl;
-        io_service.stop();
+        if (!reconnect_interval) {
+            io_service.stop();
+        }
     });
 
     boost::optional<std::pair<double, double>> location = boost::none;
@@ -117,7 +121,7 @@ static int realmain(int argc, char **argv) {
     tracker->Stop();
     writer->Stop();
 
-    return 0;
+    return 1; // connection loss is abnormal
 }
 
 int main(int argc, char **argv) {
