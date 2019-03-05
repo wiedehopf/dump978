@@ -53,8 +53,8 @@ static int realmain(int argc, char **argv) {
         ("json-dir", po::value<std::string>(), "write json files to given directory")
         ("history-count", po::value<unsigned>()->default_value(120), "number of history files to maintain")
         ("history-interval", po::value<unsigned>()->default_value(30), "interval between history files (seconds)")
-        ("lat", po::value<unsigned>(), "latitude of receiver")
-        ("lon", po::value<unsigned>(), "longitude of receiver");
+        ("lat", po::value<double>(), "latitude of receiver")
+        ("lon", po::value<double>(), "longitude of receiver");
     // clang-format on
 
     po::variables_map opts;
