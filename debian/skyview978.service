@@ -5,7 +5,7 @@ Description=skyview978 ADS-B UAT web display
 Documentation=https://flightaware.com/adsb/piaware/
 Wants=network.target
 After=network.target
-After=dump978-fa.target
+After=dump978-fa.service
 
 [Service]
 EnvironmentFile=/etc/default/skyview978
@@ -19,4 +19,4 @@ Restart=on-failure
 RestartSec=30
 
 [Install]
-WantedBy=dump978-fa.target
+WantedBy=dump978-fa.service
