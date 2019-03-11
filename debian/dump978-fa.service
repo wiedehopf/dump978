@@ -9,6 +9,7 @@ After=network.target
 [Service]
 User=dump978
 ExecStart=/usr/share/dump978-fa/start-dump978-fa
+SyslogIdentifier=dump978-fa
 Type=simple
 Restart=on-failure
 RestartSec=30
