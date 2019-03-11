@@ -25,7 +25,7 @@ namespace dump978 {
         std::cerr << "SoapySDR: " << level << ": " << message << std::endl;
     }
 
-    SoapySampleSource::SoapySampleSource(const std::string &device_name, const boost::program_options::variables_map &options) : timer_(service), device_name_(device_name), options_(options) {
+    SoapySampleSource::SoapySampleSource(boost::asio::io_service &service, const std::string &device_name, const boost::program_options::variables_map &options) : timer_(service), device_name_(device_name), options_(options) {
         if (!log_handler_registered_.exchange(true)) {
             SoapySDR::registerLogHandler(SoapyLogger);
         }
@@ -143,6 +143,21 @@ namespace dump978 {
 
         halt_ = false;
         rx_thread_.reset(new std::thread(&SoapySampleSource::Run, this));
+
+        Keepalive();
+    }
+
+    void SoapySampleSource::Keepalive() {
+        if (rx_thread_ && rx_thread_->joinable()) {
+            // Keep the io_service alive while the rx_thread is active
+            auto self(shared_from_this());
+            timer_.expires_from_now(std::chrono::milliseconds(1000));
+            timer_.async_wait([self, this](const boost::system::error_code &ec) {
+                if (!ec) {
+                    Keepalive();
+                }
+            });
+        }
     }
 
     void SoapySampleSource::Stop() {

@@ -137,7 +137,7 @@ static int realmain(int argc, char **argv) {
         source = FileSampleSource::Create(io_service, path, opts);
     } else if (opts.count("sdr")) {
         auto device = opts["sdr"].as<std::string>();
-        source = SoapySampleSource::Create(device, opts);
+        source = SoapySampleSource::Create(io_service, device, opts);
     } else {
         assert("impossible case" && false);
     }
