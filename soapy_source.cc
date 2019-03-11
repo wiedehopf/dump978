@@ -10,6 +10,7 @@
 #include <SoapySDR/Errors.hpp>
 #include <SoapySDR/Logger.hpp>
 #include <SoapySDR/Formats.hpp>
+#include <SoapySDR/Version.hpp>
 
 namespace dump978 {
     std::atomic_bool SoapySampleSource::log_handler_registered_(false);
@@ -112,6 +113,7 @@ namespace dump978 {
             device_->setGain(SOAPY_SDR_RX, 0, range.maximum());
         }
 
+#ifdef SOAPY_SDR_API_HAS_FREQUENCY_CORRECTION_API
         if (options_.count("sdr-ppm")) {
             if (device_->hasFrequencyCorrection(SOAPY_SDR_RX, 0)) {
                 auto ppm = options_["sdr-ppm"].as<double>();
@@ -121,6 +123,7 @@ namespace dump978 {
                 throw std::runtime_error("device does not support frequency correction");
             }
         }
+#endif
 
         if (options_.count("sdr-antenna")) {
             auto antenna = options_["sdr-antenna"].as<std::string>();
