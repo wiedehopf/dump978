@@ -207,9 +207,12 @@ static int realmain(int argc, char **argv) {
     auto receiver = std::make_shared<SingleThreadReceiver>(format);
     receiver->SetConsumer(std::bind(&MessageDispatch::Dispatch, &dispatch, std::placeholders::_1));
 
-    source->SetConsumer([&io_service, receiver](std::uint64_t timestamp, const Bytes &buffer, const boost::system::error_code &ec) {
+    boost::system::error_code saw_error;
+
+    source->SetConsumer([&io_service, &saw_error, receiver](std::uint64_t timestamp, const Bytes &buffer, const boost::system::error_code &ec) {
         if (ec) {
             std::cerr << "sample source reports error: " << ec.message() << std::endl;
+            saw_error = ec;
             io_service.stop();
         } else {
             receiver->HandleSamples(timestamp, buffer.begin(), buffer.end());
@@ -221,7 +224,14 @@ static int realmain(int argc, char **argv) {
     io_service.run();
 
     source->Stop();
-    return 0;
+
+    if (saw_error) {
+        std::cerr << "Abnormal exit" << std::endl;
+        return 1;
+    } else {
+        std::cerr << "Ran out of things to do, exiting" << std::endl;
+        return 0;
+    }
 }
 
 int main(int argc, char **argv) {
