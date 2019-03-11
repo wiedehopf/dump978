@@ -1,5 +1,13 @@
 # skyview978 configuration
-# This is read by the systemd service file as an environment file
+# This is sourced by /usr/share/skyview978/start-skyview978 as a
+# shellscript fragment.
+
+# If you are using a PiAware sdcard image, this config file is regenerated
+# on boot based on the contents of piaware-config.txt; any changes made to this
+# file will be lost.
+
+# skyview978 won't automatically start unless ENABLED=yes
+ENABLED=yes
 
 NET_OPTIONS="--connect localhost:30978 --reconnect-interval 30"
 HISTORY_OPTIONS="--history-count 120 --history-interval 30"

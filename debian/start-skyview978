@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# Helper script that reads /etc/default/skyview978
+# and either starts skyview978 with the configured
+# arguments, or exits with status 64 to tell systemd
+# not to auto-restart the service.
+
+if [ -f /etc/default/skyview978 ]
+then
+    . /etc/default/skyview978
+fi
+
+if [ -f /var/cache/piaware/location.env ]
+then
+    . /var/cache/piaware/location.env
+fi
+
+if [ "x$ENABLED" != "xyes" ]
+then
+    echo "skyview978 not enabled in /etc/default/skyview978" >&2
+    exit 64
+fi
+
+if [ -n "$LAT" -a -n "$LON" ]
+then
+    POSITION="--lat $LAT --lon $LON"
+fi
+
+exec /usr/bin/skyview978 \
+     $NET_OPTIONS $HISTORY_OPTIONS $POSITION \
+     "$@"
+# exec failed, do not restart
+exit 64
