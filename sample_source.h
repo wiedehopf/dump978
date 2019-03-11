@@ -29,8 +29,10 @@ namespace dump978 {
 
         virtual ~SampleSource() {}
 
+        virtual void Init() = 0;
         virtual void Start() = 0;
         virtual void Stop() = 0;
+        virtual SampleFormat Format() = 0;
 
         void SetConsumer(Consumer consumer) { consumer_ = consumer; }
 
@@ -55,21 +57,32 @@ namespace dump978 {
 
     class FileSampleSource : public SampleSource {
       public:
-        static SampleSource::Pointer Create(boost::asio::io_service &service, const boost::filesystem::path &path, SampleFormat format, const boost::program_options::variables_map &options = boost::program_options::variables_map(), std::size_t samples_per_second = 2083333, std::size_t samples_per_block = 524288) { return Pointer(new FileSampleSource(service, path, format, options, samples_per_second, samples_per_block)); }
+        static SampleSource::Pointer Create(boost::asio::io_service &service, const boost::filesystem::path &path, const boost::program_options::variables_map &options = boost::program_options::variables_map(), std::size_t samples_per_second = 2083333, std::size_t samples_per_block = 524288) { return Pointer(new FileSampleSource(service, path, options, samples_per_second, samples_per_block)); }
 
+        void Init() override {}
         void Start() override;
         void Stop() override;
+        SampleFormat Format() override { return format_; }
 
       private:
-        FileSampleSource(boost::asio::io_service &service, const boost::filesystem::path &path, SampleFormat format, const boost::program_options::variables_map &options, std::size_t samples_per_second, std::size_t samples_per_block) : service_(service), path_(path), alignment_(BytesPerSample(format)), bytes_per_second_(samples_per_second * alignment_), timer_(service) {
-            block_.reserve(samples_per_block * alignment_);
+        FileSampleSource(boost::asio::io_service &service, const boost::filesystem::path &path, const boost::program_options::variables_map &options, std::size_t samples_per_second, std::size_t samples_per_block) : service_(service), path_(path), timer_(service) {
+            if (!options.count("format")) {
+                throw std::runtime_error("--format must be specified when using a file input");
+            }
+
             throttle_ = (options.count("file-throttle") > 0);
+
+            format_ = options["format"].as<SampleFormat>();
+            alignment_ = BytesPerSample(format_);
+            bytes_per_second_ = samples_per_second * alignment_;
+            block_.reserve(samples_per_block * alignment_);
         }
 
         void ReadBlock(const boost::system::error_code &ec);
 
         boost::asio::io_service &service_;
         boost::filesystem::path path_;
+        SampleFormat format_;
         unsigned alignment_;
         bool throttle_;
         std::size_t bytes_per_second_;
@@ -83,17 +96,28 @@ namespace dump978 {
 
     class StdinSampleSource : public SampleSource {
       public:
-        static SampleSource::Pointer Create(boost::asio::io_service &service, SampleFormat format, std::size_t samples_per_second = 2083333, std::size_t samples_per_block = 524288) { return Pointer(new StdinSampleSource(service, format, samples_per_second, samples_per_block)); }
+        static SampleSource::Pointer Create(boost::asio::io_service &service, const boost::program_options::variables_map &options, std::size_t samples_per_second = 2083333, std::size_t samples_per_block = 524288) { return Pointer(new StdinSampleSource(service, options, samples_per_second, samples_per_block)); }
 
+        void Init() override {}
         void Start() override;
         void Stop() override;
+        SampleFormat Format() override { return format_; }
 
       private:
-        StdinSampleSource(boost::asio::io_service &service, SampleFormat format, std::size_t samples_per_second, std::size_t samples_per_block) : service_(service), alignment_(BytesPerSample(format)), samples_per_second_(samples_per_second), stream_(service), used_(0) { block_.resize(samples_per_block * alignment_); }
+        StdinSampleSource(boost::asio::io_service &service, const boost::program_options::variables_map &options, std::size_t samples_per_second, std::size_t samples_per_block) : service_(service), samples_per_second_(samples_per_second), stream_(service), used_(0) {
+            if (!options.count("format")) {
+                throw std::runtime_error("--format must be specified when using a file input");
+            }
+
+            format_ = options["format"].as<SampleFormat>();
+            alignment_ = BytesPerSample(format_);
+            block_.reserve(samples_per_block * alignment_);
+        }
 
         void ScheduleRead();
 
         boost::asio::io_service &service_;
+        SampleFormat format_;
         unsigned alignment_;
         std::size_t samples_per_second_;
         boost::asio::posix::stream_descriptor stream_;

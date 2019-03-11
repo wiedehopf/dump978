@@ -25,7 +25,7 @@ namespace dump978 {
         std::cerr << "SoapySDR: " << level << ": " << message << std::endl;
     }
 
-    SoapySampleSource::SoapySampleSource(SampleFormat format, const std::string &device_name, const boost::program_options::variables_map &options) : format_(format), device_name_(device_name), options_(options), halt_(false) {
+    SoapySampleSource::SoapySampleSource(const std::string &device_name, const boost::program_options::variables_map &options) : timer_(service), device_name_(device_name), options_(options) {
         if (!log_handler_registered_.exchange(true)) {
             SoapySDR::registerLogHandler(SoapyLogger);
         }
@@ -33,7 +33,7 @@ namespace dump978 {
 
     SoapySampleSource::~SoapySampleSource() { Stop(); }
 
-    void SoapySampleSource::Start() {
+    void SoapySampleSource::Init() {
         device_ = {SoapySDR::Device::make(device_name_), &SoapySDR::Device::unmake};
         if (!device_) {
             throw std::runtime_error("no suitable device found");
@@ -73,22 +73,45 @@ namespace dump978 {
             }
         }
 
+        if (options_.count("format")) {
+            format_ = options_["format"].as<SampleFormat>();
+        }
+
         std::string soapy_format;
-        switch (format_) {
-        case SampleFormat::CU8:
-            soapy_format = "CU8";
-            break;
-        case SampleFormat::CS8:
-            soapy_format = "CS8";
-            break;
-        case SampleFormat::CS16H:
-            soapy_format = "CS16";
-            break;
-        case SampleFormat::CF32H:
-            soapy_format = "CF32";
-            break;
-        default:
-            throw std::runtime_error("unsupported sample format");
+        if (format_ == SampleFormat::UNKNOWN) {
+            double fullScale;
+            soapy_format = device_->getNativeStreamFormat(SOAPY_SDR_RX, 0, fullScale);
+            // clang-format off
+            static std::map<std::string,SampleFormat> format_map = {
+                { "CU8", SampleFormat::CU8 },
+                { "CS8", SampleFormat::CS8 },
+                { "CS16", SampleFormat::CS16H },
+                { "CF32", SampleFormat::CF32H }
+            };
+            // clang-format on
+            auto i = format_map.find(soapy_format);
+            if (i != format_map.end()) {
+                format_ = i->second;
+            } else {
+                throw std::runtime_error("Unsupported native SDR format: " + soapy_format + "; try specifying --format");
+            }
+        } else {
+            switch (format_) {
+            case SampleFormat::CU8:
+                soapy_format = "CU8";
+                break;
+            case SampleFormat::CS8:
+                soapy_format = "CS8";
+                break;
+            case SampleFormat::CS16H:
+                soapy_format = "CS16";
+                break;
+            case SampleFormat::CF32H:
+                soapy_format = "CF32";
+                break;
+            default:
+                throw std::runtime_error("unsupported sample format");
+            }
         }
 
         std::vector<size_t> channels = {0};
@@ -108,6 +131,12 @@ namespace dump978 {
         stream_ = {device_->setupStream(SOAPY_SDR_RX, soapy_format, channels, stream_settings), std::bind(&SoapySDR::Device::closeStream, device_, std::placeholders::_1)};
         if (!stream_) {
             throw std::runtime_error("failed to construct stream");
+        }
+    }
+
+    void SoapySampleSource::Start() {
+        if (!device_ || !stream_) {
+            Init();
         }
 
         device_->activateStream(stream_.get());

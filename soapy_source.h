@@ -18,26 +18,28 @@
 namespace dump978 {
     class SoapySampleSource : public SampleSource {
       public:
-        static SampleSource::Pointer Create(SampleFormat format, const std::string &device_name, const boost::program_options::variables_map &options) { return Pointer(new SoapySampleSource(format, device_name, options)); }
+        static SampleSource::Pointer Create(const std::string &device_name, const boost::program_options::variables_map &options) { return Pointer(new SoapySampleSource(service, device_name, options)); }
 
         virtual ~SoapySampleSource();
 
+        void Init() override;
         void Start() override;
         void Stop() override;
+        SampleFormat Format() override { return format_; }
 
       private:
-        SoapySampleSource(SampleFormat format, const std::string &device_name, const boost::program_options::variables_map &options);
+        SoapySampleSource(const std::string &device_name, const boost::program_options::variables_map &options);
 
         void Run();
 
-        SampleFormat format_;
+        SampleFormat format_ = SampleFormat::UNKNOWN;
         std::string device_name_;
         boost::program_options::variables_map options_;
 
         std::shared_ptr<SoapySDR::Device> device_;
         std::shared_ptr<SoapySDR::Stream> stream_;
         std::unique_ptr<std::thread> rx_thread_;
-        bool halt_;
+        bool halt_ = false;
 
         static std::atomic_bool log_handler_registered_;
     };

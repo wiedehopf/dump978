@@ -29,9 +29,7 @@ struct listen_option {
     std::string port;
 };
 
-struct format_option {
-    SampleFormat format;
-};
+SampleFormat format;
 
 // Specializations of validate for --xxx-port
 void validate(boost::any &v, const std::vector<std::string> &values, listen_option *target_type, int) {
@@ -51,18 +49,27 @@ void validate(boost::any &v, const std::vector<std::string> &values, listen_opti
 }
 
 // Specializations of validate for --format
-void validate(boost::any &v, const std::vector<std::string> &values, format_option *target_type, int) {
-    po::validators::check_first_occurrence(v);
-    const std::string &s = po::validators::get_single_string(values);
+namespace dump978 {
+    void validate(boost::any &v, const std::vector<std::string> &values, SampleFormat *target_type, int) {
+        po::validators::check_first_occurrence(v);
+        const std::string &s = po::validators::get_single_string(values);
 
-    static std::map<std::string, SampleFormat> formats{{"CU8", SampleFormat::CU8}, {"CS8", SampleFormat::CS8}, {"CS16H", SampleFormat::CS16H}, {"CF32H", SampleFormat::CF32H}};
+        // clang-format off
+        static std::map<std::string, SampleFormat> formats = {
+            {"CU8", SampleFormat::CU8},
+            {"CS8", SampleFormat::CS8},
+            {"CS16H", SampleFormat::CS16H},
+            {"CF32H", SampleFormat::CF32H}
+        };
+        // clang-format on
 
-    auto entry = formats.find(s);
-    if (entry == formats.end())
-        throw po::validation_error(po::validation_error::invalid_option_value);
+        auto entry = formats.find(s);
+        if (entry == formats.end())
+            throw po::validation_error(po::validation_error::invalid_option_value);
 
-    v = boost::any(format_option{entry->second});
-}
+        v = boost::any(entry->second);
+    }
+} // namespace dump978
 
 #define EXIT_NO_RESTART (64)
 
@@ -76,7 +83,7 @@ static int realmain(int argc, char **argv) {
         ("version", "show version")
         ("raw-stdout", "write raw messages to stdout")
         ("json-stdout", "write decoded json to stdout")
-        ("format", po::value<format_option>()->default_value({SampleFormat::CU8}, "CU8"), "set sample format")
+        ("format", po::value<SampleFormat>(), "set sample format")
         ("stdin", "read sample data from stdin")
         ("file", po::value<std::string>(), "read sample data from a file")
         ("file-throttle", "throttle file input to realtime")
@@ -118,21 +125,19 @@ static int realmain(int argc, char **argv) {
 
     tcp::resolver resolver(io_service);
 
-    auto format = opts["format"].as<format_option>().format;
-
     if (opts.count("stdin") + opts.count("file") + opts.count("sdr") != 1) {
         std::cerr << "Exactly one of --stdin, --file, or --sdr must be used" << std::endl;
         return EXIT_NO_RESTART;
     }
 
     if (opts.count("stdin")) {
-        source = StdinSampleSource::Create(io_service, format);
+        source = StdinSampleSource::Create(io_service, opts);
     } else if (opts.count("file")) {
         boost::filesystem::path path(opts["file"].as<std::string>());
-        source = FileSampleSource::Create(io_service, path, format, opts);
+        source = FileSampleSource::Create(io_service, path, opts);
     } else if (opts.count("sdr")) {
         auto device = opts["sdr"].as<std::string>();
-        source = SoapySampleSource::Create(format, device, opts);
+        source = SoapySampleSource::Create(device, opts);
     } else {
         assert("impossible case" && false);
     }
@@ -195,6 +200,9 @@ static int realmain(int argc, char **argv) {
             }
         });
     }
+
+    source->Init();
+    auto format = source->Format();
 
     auto receiver = std::make_shared<SingleThreadReceiver>(format);
     receiver->SetConsumer(std::bind(&MessageDispatch::Dispatch, &dispatch, std::placeholders::_1));
