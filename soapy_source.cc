@@ -4,6 +4,7 @@
 
 #include "soapy_source.h"
 
+#include <iomanip>
 #include <iostream>
 
 #include <SoapySDR/Errors.hpp>
@@ -13,7 +14,19 @@ namespace dump978 {
     std::atomic_bool SoapySampleSource::log_handler_registered_(false);
 
     static void SoapyLogger(const SoapySDRLogLevel logLevel, const char *message) {
-        static std::map<SoapySDRLogLevel, std::string> levels = {{SOAPY_SDR_FATAL, "FATAL"}, {SOAPY_SDR_CRITICAL, "CRITICAL"}, {SOAPY_SDR_ERROR, "ERROR"}, {SOAPY_SDR_WARNING, "WARNING"}, {SOAPY_SDR_NOTICE, "NOTICE"}, {SOAPY_SDR_INFO, "INFO"}, {SOAPY_SDR_DEBUG, "DEBUG"}, {SOAPY_SDR_TRACE, "TRACE"}, {SOAPY_SDR_SSI, "SSI"}};
+        // clang-format off
+        static std::map<SoapySDRLogLevel, std::string> levels = {
+            {SOAPY_SDR_FATAL, "FATAL"},
+            {SOAPY_SDR_CRITICAL, "CRITICAL"},
+            {SOAPY_SDR_ERROR, "ERROR"},
+            {SOAPY_SDR_WARNING, "WARNING"},
+            {SOAPY_SDR_NOTICE, "NOTICE"},
+            {SOAPY_SDR_INFO, "INFO"},
+            {SOAPY_SDR_DEBUG, "DEBUG"},
+            {SOAPY_SDR_TRACE, "TRACE"},
+            {SOAPY_SDR_SSI, "SSI"}
+        };
+        // clang-format on
 
         std::string level;
         auto i = levels.find(logLevel);
@@ -48,27 +61,39 @@ namespace dump978 {
             if (!device_->hasGainMode(SOAPY_SDR_RX, 0)) {
                 throw std::runtime_error("device does not support automatic gain mode");
             }
+            std::cerr << "SoapySDR: using automatic gain" << std::endl;
             device_->setGainMode(SOAPY_SDR_RX, 0, true);
-        } else {
-            auto gain = options_.count("sdr-gain") ? options_["sdr-gain"].as<double>() : 100.0;
+        } else if (options_.count("sdr-gain")) {
+            auto gain = options_["sdr-gain"].as<double>();
+            std::cerr << "SoapySDR: using manual gain " << std::fixed << std::setprecision(1) << gain << " dB" << std::endl;
             device_->setGainMode(SOAPY_SDR_RX, 0, false);
             device_->setGain(SOAPY_SDR_RX, 0, gain);
+        } else {
+            auto range = device_->getGainRange(SOAPY_SDR_RX, 0);
+            std::cerr << "SoapySDR: using maximum manual gain " << std::fixed << std::setprecision(1) << range.maximum() << " dB" << std::endl;
+            device_->setGainMode(SOAPY_SDR_RX, 0, false);
+            device_->setGain(SOAPY_SDR_RX, 0, range.maximum());
         }
 
         if (options_.count("sdr-ppm")) {
             if (device_->hasFrequencyCorrection(SOAPY_SDR_RX, 0)) {
-                device_->setFrequencyCorrection(SOAPY_SDR_RX, 0, options_["sdr-ppm"].as<double>());
+                auto ppm = options_["sdr-ppm"].as<double>();
+                std::cerr << "SoapySDR: using frequency correction " << std::fixed << std::setprecision(1) << ppm << " ppm" << std::endl;
+                device_->setFrequencyCorrection(SOAPY_SDR_RX, 0, ppm);
             } else {
                 throw std::runtime_error("device does not support frequency correction");
             }
         }
 
         if (options_.count("sdr-antenna")) {
-            device_->setAntenna(SOAPY_SDR_RX, 0, options_["sdr-antenna"].as<std::string>());
+            auto antenna = options_["sdr-antenna"].as<std::string>();
+            std::cerr << "SoapySDR: using antenna " << antenna << std::endl;
+            device_->setAntenna(SOAPY_SDR_RX, 0, antenna);
         }
 
         if (options_.count("sdr-device-settings")) {
             for (auto kv : SoapySDR::KwargsFromString(options_["sdr-stream-settings"].as<std::string>())) {
+                std::cerr << "SoapySDR: using device setting " << kv.first << "=" << kv.second << std::endl;
                 device_->writeSetting(kv.first, kv.second);
             }
         }
@@ -124,6 +149,7 @@ namespace dump978 {
 
         if (options_.count("sdr-stream-settings")) {
             for (auto kv : SoapySDR::KwargsFromString(options_["sdr-stream-settings"].as<std::string>())) {
+                std::cerr << "SoapySDR: using stream setting " << kv.first << "=" << kv.second << std::endl;
                 stream_settings[kv.first] = kv.second;
             }
         }
