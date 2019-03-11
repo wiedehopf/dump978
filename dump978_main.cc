@@ -81,6 +81,12 @@ static int realmain(int argc, char **argv) {
         ("file", po::value<std::string>(), "read sample data from a file")
         ("file-throttle", "throttle file input to realtime")
         ("sdr", po::value<std::string>(), "read sample data from named SDR device")
+        ("sdr-auto-gain", "enable SDR AGC")
+        ("sdr-gain", po::value<double>(), "set SDR gain in dB")
+        ("sdr-ppm", po::value<double>(), "set SDR frequency correction in PPM")
+        ("sdr-antenna", po::value<std::string>(), "set SDR antenna name")
+        ("sdr-stream-settings", po::value<std::string>(), "set SDR stream key-value settings")
+        ("sdr-device-settings", po::value<std::string>(), "set SDR device key-value settings")
         ("raw-port", po::value<std::vector<listen_option>>(), "listen for connections on [host:]port and provide raw messages")
         ("json-port", po::value<std::vector<listen_option>>(), "listen for connections on [host:]port and provide decoded json");
     // clang-format on
@@ -123,10 +129,10 @@ static int realmain(int argc, char **argv) {
         source = StdinSampleSource::Create(io_service, format);
     } else if (opts.count("file")) {
         boost::filesystem::path path(opts["file"].as<std::string>());
-        source = FileSampleSource::Create(io_service, path, format, opts.count("file-throttle") > 0);
+        source = FileSampleSource::Create(io_service, path, format, opts);
     } else if (opts.count("sdr")) {
         auto device = opts["sdr"].as<std::string>();
-        source = SoapySampleSource::Create(format, device);
+        source = SoapySampleSource::Create(format, device, opts);
     } else {
         assert("impossible case" && false);
     }

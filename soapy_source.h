@@ -18,7 +18,7 @@
 namespace dump978 {
     class SoapySampleSource : public SampleSource {
       public:
-        static SampleSource::Pointer Create(SampleFormat format, const std::string &device_name) { return Pointer(new SoapySampleSource(format, device_name)); }
+        static SampleSource::Pointer Create(SampleFormat format, const std::string &device_name, const boost::program_options::variables_map &options) { return Pointer(new SoapySampleSource(format, device_name, options)); }
 
         virtual ~SoapySampleSource();
 
@@ -26,12 +26,13 @@ namespace dump978 {
         void Stop() override;
 
       private:
-        SoapySampleSource(SampleFormat format, const std::string &device_name);
+        SoapySampleSource(SampleFormat format, const std::string &device_name, const boost::program_options::variables_map &options);
 
         void Run();
 
         SampleFormat format_;
         std::string device_name_;
+        boost::program_options::variables_map options_;
 
         std::shared_ptr<SoapySDR::Device> device_;
         std::shared_ptr<SoapySDR::Stream> stream_;

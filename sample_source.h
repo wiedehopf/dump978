@@ -16,6 +16,7 @@
 #include <boost/asio/posix/stream_descriptor.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
 
 #include "common.h"
 #include "convert.h"
@@ -54,13 +55,16 @@ namespace dump978 {
 
     class FileSampleSource : public SampleSource {
       public:
-        static SampleSource::Pointer Create(boost::asio::io_service &service, const boost::filesystem::path &path, SampleFormat format, bool throttle, std::size_t samples_per_second = 2083333, std::size_t samples_per_block = 524288) { return Pointer(new FileSampleSource(service, path, format, throttle, samples_per_second, samples_per_block)); }
+        static SampleSource::Pointer Create(boost::asio::io_service &service, const boost::filesystem::path &path, SampleFormat format, const boost::program_options::variables_map &options = boost::program_options::variables_map(), std::size_t samples_per_second = 2083333, std::size_t samples_per_block = 524288) { return Pointer(new FileSampleSource(service, path, format, options, samples_per_second, samples_per_block)); }
 
         void Start() override;
         void Stop() override;
 
       private:
-        FileSampleSource(boost::asio::io_service &service, const boost::filesystem::path &path, SampleFormat format, bool throttle, std::size_t samples_per_second, std::size_t samples_per_block) : service_(service), path_(path), alignment_(BytesPerSample(format)), throttle_(throttle), bytes_per_second_(samples_per_second * alignment_), timer_(service) { block_.reserve(samples_per_block * alignment_); }
+        FileSampleSource(boost::asio::io_service &service, const boost::filesystem::path &path, SampleFormat format, const boost::program_options::variables_map &options, std::size_t samples_per_second, std::size_t samples_per_block) : service_(service), path_(path), alignment_(BytesPerSample(format)), bytes_per_second_(samples_per_second * alignment_), timer_(service) {
+            block_.reserve(samples_per_block * alignment_);
+            throttle_ = (options.count("file-throttle") > 0);
+        }
 
         void ReadBlock(const boost::system::error_code &ec);
 

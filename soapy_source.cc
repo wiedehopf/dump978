@@ -25,7 +25,7 @@ namespace dump978 {
         std::cerr << "SoapySDR: " << level << ": " << message << std::endl;
     }
 
-    SoapySampleSource::SoapySampleSource(SampleFormat format, const std::string &device_name) : format_(format), device_name_(device_name), halt_(false) {
+    SoapySampleSource::SoapySampleSource(SampleFormat format, const std::string &device_name, const boost::program_options::variables_map &options) : format_(format), device_name_(device_name), options_(options), halt_(false) {
         if (!log_handler_registered_.exchange(true)) {
             SoapySDR::registerLogHandler(SoapyLogger);
         }
@@ -42,8 +42,36 @@ namespace dump978 {
         // hacky mchackerson
         device_->setSampleRate(SOAPY_SDR_RX, 0, 2083333.0);
         device_->setFrequency(SOAPY_SDR_RX, 0, 978000000);
-        device_->setGain(SOAPY_SDR_RX, 0, 50.0);
         device_->setBandwidth(SOAPY_SDR_RX, 0, 3.0e6);
+
+        if (options_.count("sdr-auto-gain")) {
+            if (!device_->hasGainMode(SOAPY_SDR_RX, 0)) {
+                throw std::runtime_error("device does not support automatic gain mode");
+            }
+            device_->setGainMode(SOAPY_SDR_RX, 0, true);
+        } else {
+            auto gain = options_.count("sdr-gain") ? options_["sdr-gain"].as<double>() : 100.0;
+            device_->setGainMode(SOAPY_SDR_RX, 0, false);
+            device_->setGain(SOAPY_SDR_RX, 0, gain);
+        }
+
+        if (options_.count("sdr-ppm")) {
+            if (device_->hasFrequencyCorrection(SOAPY_SDR_RX, 0)) {
+                device_->setFrequencyCorrection(SOAPY_SDR_RX, 0, options_["sdr-ppm"].as<double>());
+            } else {
+                throw std::runtime_error("device does not support frequency correction");
+            }
+        }
+
+        if (options_.count("sdr-antenna")) {
+            device_->setAntenna(SOAPY_SDR_RX, 0, options_["sdr-antenna"].as<std::string>());
+        }
+
+        if (options_.count("sdr-device-settings")) {
+            for (auto kv : SoapySDR::KwargsFromString(options_["sdr-stream-settings"].as<std::string>())) {
+                device_->writeSetting(kv.first, kv.second);
+            }
+        }
 
         std::string soapy_format;
         switch (format_) {
@@ -65,13 +93,19 @@ namespace dump978 {
 
         std::vector<size_t> channels = {0};
 
-        SoapySDR::Kwargs args;
+        SoapySDR::Kwargs stream_settings;
         if (device_->getDriverKey() == "RTLSDR") {
             // some soapysdr builds have a very low default here
-            args["buffsize"] = "262144";
+            stream_settings["buffsize"] = "262144";
         }
 
-        stream_ = {device_->setupStream(SOAPY_SDR_RX, soapy_format, channels, args), std::bind(&SoapySDR::Device::closeStream, device_, std::placeholders::_1)};
+        if (options_.count("sdr-stream-settings")) {
+            for (auto kv : SoapySDR::KwargsFromString(options_["sdr-stream-settings"].as<std::string>())) {
+                stream_settings[kv.first] = kv.second;
+            }
+        }
+
+        stream_ = {device_->setupStream(SOAPY_SDR_RX, soapy_format, channels, stream_settings), std::bind(&SoapySDR::Device::closeStream, device_, std::placeholders::_1)};
         if (!stream_) {
             throw std::runtime_error("failed to construct stream");
         }
