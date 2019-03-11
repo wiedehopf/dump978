@@ -9,6 +9,7 @@
 
 #include <SoapySDR/Errors.hpp>
 #include <SoapySDR/Logger.hpp>
+#include <SoapySDR/Formats.hpp>
 
 namespace dump978 {
     std::atomic_bool SoapySampleSource::log_handler_registered_(false);
@@ -36,6 +37,42 @@ namespace dump978 {
             level = i->second;
 
         std::cerr << "SoapySDR: " << level << ": " << message << std::endl;
+    }
+
+    static std::string FormatToSoapy(SampleFormat format) {
+        // clang-format off
+        static const std::map<SampleFormat,std::string> lookup = {
+            { SampleFormat::CU8, SOAPY_SDR_CU8 },
+            { SampleFormat::CS8, SOAPY_SDR_CS8 },
+            { SampleFormat::CS16H, SOAPY_SDR_CS16 },
+            { SampleFormat::CF32H, SOAPY_SDR_CF32 }
+        };
+        // clang-format on
+
+        auto i = lookup.find(format);
+        if (i != lookup.end()) {
+            return i->second;
+        } else {
+            return "";
+        }
+    }
+
+    static SampleFormat SoapyToFormat(std::string format) {
+        // clang-format off
+        static const std::map<std::string,SampleFormat> lookup = {
+            { SOAPY_SDR_CU8, SampleFormat::CU8 },
+            { SOAPY_SDR_CS8, SampleFormat::CS8  },
+            { SOAPY_SDR_CS16, SampleFormat::CS16H },
+            { SOAPY_SDR_CF32, SampleFormat::CF32H }
+        };
+        // clang-format on
+
+        auto i = lookup.find(format);
+        if (i != lookup.end()) {
+            return i->second;
+        } else {
+            return SampleFormat::UNKNOWN;
+        }
     }
 
     SoapySampleSource::SoapySampleSource(boost::asio::io_service &service, const std::string &device_name, const boost::program_options::variables_map &options) : timer_(service), device_name_(device_name), options_(options) {
@@ -106,35 +143,13 @@ namespace dump978 {
         if (format_ == SampleFormat::UNKNOWN) {
             double fullScale;
             soapy_format = device_->getNativeStreamFormat(SOAPY_SDR_RX, 0, fullScale);
-            // clang-format off
-            static std::map<std::string,SampleFormat> format_map = {
-                { "CU8", SampleFormat::CU8 },
-                { "CS8", SampleFormat::CS8 },
-                { "CS16", SampleFormat::CS16H },
-                { "CF32", SampleFormat::CF32H }
-            };
-            // clang-format on
-            auto i = format_map.find(soapy_format);
-            if (i != format_map.end()) {
-                format_ = i->second;
-            } else {
+            format_ = SoapyToFormat(soapy_format);
+            if (format_ == SampleFormat::UNKNOWN) {
                 throw std::runtime_error("Unsupported native SDR format: " + soapy_format + "; try specifying --format");
             }
         } else {
-            switch (format_) {
-            case SampleFormat::CU8:
-                soapy_format = "CU8";
-                break;
-            case SampleFormat::CS8:
-                soapy_format = "CS8";
-                break;
-            case SampleFormat::CS16H:
-                soapy_format = "CS16";
-                break;
-            case SampleFormat::CF32H:
-                soapy_format = "CF32";
-                break;
-            default:
+            soapy_format = FormatToSoapy(format_);
+            if (soapy_format.empty()) {
                 throw std::runtime_error("unsupported sample format");
             }
         }
