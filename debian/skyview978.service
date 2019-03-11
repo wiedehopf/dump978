@@ -8,8 +8,6 @@ After=network.target
 After=dump978-fa.service
 
 [Service]
-EnvironmentFile=/etc/default/skyview978
-EnvironmentFile=-/var/cache/piaware/location.env
 User=skyview
 RuntimeDirectory=skyview978
 RuntimeDirectoryMode=0755
