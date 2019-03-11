@@ -131,12 +131,14 @@ namespace dump978 {
             device_->setAntenna(SOAPY_SDR_RX, 0, antenna);
         }
 
+#if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION >= 0x00060000)
         if (options_.count("sdr-device-settings")) {
             for (auto kv : SoapySDR::KwargsFromString(options_["sdr-stream-settings"].as<std::string>())) {
                 std::cerr << "SoapySDR: using device setting " << kv.first << "=" << kv.second << std::endl;
                 device_->writeSetting(kv.first, kv.second);
             }
         }
+#endif
 
         if (options_.count("format")) {
             format_ = options_["format"].as<SampleFormat>();
@@ -165,12 +167,14 @@ namespace dump978 {
             stream_settings["buffsize"] = "262144";
         }
 
+#if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION >= 0x00060000)
         if (options_.count("sdr-stream-settings")) {
             for (auto kv : SoapySDR::KwargsFromString(options_["sdr-stream-settings"].as<std::string>())) {
                 std::cerr << "SoapySDR: using stream setting " << kv.first << "=" << kv.second << std::endl;
                 stream_settings[kv.first] = kv.second;
             }
         }
+#endif
 
         stream_ = {device_->setupStream(SOAPY_SDR_RX, soapy_format, channels, stream_settings), std::bind(&SoapySDR::Device::closeStream, device_, std::placeholders::_1)};
         if (!stream_) {
