@@ -7,12 +7,12 @@ Wants=network.target
 After=network.target
 
 [Service]
-EnvironmentFile=/etc/default/dump978-fa
 User=dump978
-ExecStart=/usr/bin/dump978-fa $RECEIVER_OPTIONS $DECODER_OPTIONS $NET_OPTIONS
+ExecStart=/usr/share/dump978-fa/start-dump978-fa
 Type=simple
 Restart=on-failure
 RestartSec=30
+RestartPreventExitStatus=64
 Nice=-5
 
 [Install]
