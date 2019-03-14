@@ -10,7 +10,7 @@ Vcs-Git: https://github.com/flightaware/dump978.git
 Package: dump978-fa
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
-Recommends: skyview978
+Recommends: skyview978, soapysdr-module-rtlsdr
 Description: ADS-B UAT Ground Station System
  .
  FlightAware's SDR decoder for UAT ADS-B messages on 978MHz.
