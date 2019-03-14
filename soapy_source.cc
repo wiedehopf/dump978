@@ -8,8 +8,8 @@
 #include <iostream>
 
 #include <SoapySDR/Errors.hpp>
-#include <SoapySDR/Logger.hpp>
 #include <SoapySDR/Formats.hpp>
+#include <SoapySDR/Logger.hpp>
 #include <SoapySDR/Version.hpp>
 
 namespace dump978 {
@@ -113,17 +113,21 @@ namespace dump978 {
             device_->setGain(SOAPY_SDR_RX, 0, range.maximum());
         }
 
-#ifdef SOAPY_SDR_API_HAS_FREQUENCY_CORRECTION_API
         if (options_.count("sdr-ppm")) {
-            if (device_->hasFrequencyCorrection(SOAPY_SDR_RX, 0)) {
-                auto ppm = options_["sdr-ppm"].as<double>();
-                std::cerr << "SoapySDR: using frequency correction " << std::fixed << std::setprecision(1) << ppm << " ppm" << std::endl;
-                device_->setFrequencyCorrection(SOAPY_SDR_RX, 0, ppm);
-            } else {
-                throw std::runtime_error("device does not support frequency correction");
+            auto ppm = options_["sdr-ppm"].as<double>();
+            if (ppm != 0) {
+#ifdef SOAPY_SDR_API_HAS_FREQUENCY_CORRECTION_API
+                if (device_->hasFrequencyCorrection(SOAPY_SDR_RX, 0) && ppm != 0) {
+                    std::cerr << "SoapySDR: using frequency correction " << std::fixed << std::setprecision(1) << ppm << " ppm" << std::endl;
+                    device_->setFrequencyCorrection(SOAPY_SDR_RX, 0, ppm);
+                } else {
+                    std::cerr << "SoapySDR: device does not support frequency correction, --sdr-ppm option ignored" << std::endl;
+                }
+#else
+                std::cerr << "SoapySDR: library version does not support frequency correction, --sdr-ppm option ignored" << std::endl;
+#endif
             }
         }
-#endif
 
         if (options_.count("sdr-antenna")) {
             auto antenna = options_["sdr-antenna"].as<std::string>();
@@ -131,14 +135,16 @@ namespace dump978 {
             device_->setAntenna(SOAPY_SDR_RX, 0, antenna);
         }
 
-#if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION >= 0x00060000)
         if (options_.count("sdr-device-settings")) {
+#if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION >= 0x00060000)
             for (auto kv : SoapySDR::KwargsFromString(options_["sdr-stream-settings"].as<std::string>())) {
                 std::cerr << "SoapySDR: using device setting " << kv.first << "=" << kv.second << std::endl;
                 device_->writeSetting(kv.first, kv.second);
             }
-        }
+#else
+            std::cerr << "SoapySDR: --sdr-device-settings option ignored in this build" << std::endl;
 #endif
+        }
 
         if (options_.count("format")) {
             format_ = options_["format"].as<SampleFormat>();
@@ -167,14 +173,16 @@ namespace dump978 {
             stream_settings["buffsize"] = "262144";
         }
 
-#if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION >= 0x00060000)
         if (options_.count("sdr-stream-settings")) {
+#if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION >= 0x00060000)
             for (auto kv : SoapySDR::KwargsFromString(options_["sdr-stream-settings"].as<std::string>())) {
                 std::cerr << "SoapySDR: using stream setting " << kv.first << "=" << kv.second << std::endl;
                 stream_settings[kv.first] = kv.second;
             }
-        }
+#else
+            std::cerr << "SoapySDR: --sdr-stream-settings options ignored in this build" << std::endl;
 #endif
+        }
 
         stream_ = {device_->setupStream(SOAPY_SDR_RX, soapy_format, channels, stream_settings), std::bind(&SoapySDR::Device::closeStream, device_, std::placeholders::_1)};
         if (!stream_) {

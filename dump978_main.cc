@@ -18,8 +18,6 @@
 #include "soapy_source.h"
 #include "socket_output.h"
 
-#include <SoapySDR/Version.hpp>
-
 using namespace uat;
 using namespace dump978;
 
@@ -92,14 +90,10 @@ static int realmain(int argc, char **argv) {
         ("sdr", po::value<std::string>(), "read sample data from named SDR device")
         ("sdr-auto-gain", "enable SDR AGC")
         ("sdr-gain", po::value<double>(), "set SDR gain in dB")
-#ifdef SOAPY_SDR_API_HAS_FREQUENCY_CORRECTION_API
         ("sdr-ppm", po::value<double>(), "set SDR frequency correction in PPM")
-#endif
         ("sdr-antenna", po::value<std::string>(), "set SDR antenna name")
-#if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION >= 0x00060000)
         ("sdr-stream-settings", po::value<std::string>(), "set SDR stream key-value settings")
         ("sdr-device-settings", po::value<std::string>(), "set SDR device key-value settings")
-#endif
         ("raw-port", po::value<std::vector<listen_option>>(), "listen for connections on [host:]port and provide raw messages")
         ("json-port", po::value<std::vector<listen_option>>(), "listen for connections on [host:]port and provide decoded json");
     // clang-format on
