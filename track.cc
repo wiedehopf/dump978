@@ -59,8 +59,8 @@ void AircraftState::UpdateFromMessage(const uat::AdsbMessage &message) {
     UPDATE(single_antenna);
     UPDATE(nic_supplement);
 
-    UPDATE(selected_altitude_type);
-    UPDATE(selected_altitude);
+    UPDATE(selected_altitude_mcp);
+    UPDATE(selected_altitude_fms);
     UPDATE(barometric_pressure_setting);
     UPDATE(selected_heading);
     UPDATE(mode_indicators);
