@@ -134,7 +134,7 @@ void SkyviewWriter::PeriodicWrite() {
             ac_json["emergency"] = aircraft.emergency.Value();
         }
         if (aircraft.mops_version.UpdateAge(now) < max_age) {
-            ac_json["version"] = aircraft.mops_version.Value(); // FIXME
+            ac_json["uat_version"] = aircraft.mops_version.Value();
         }
         if (aircraft.sil.UpdateAge(now) < max_age) {
             ac_json["sil"] = aircraft.sil.Value();
