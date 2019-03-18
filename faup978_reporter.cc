@@ -250,7 +250,26 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
     add_aged_field("nav_alt_mcp", aircraft.selected_altitude_mcp, simple_emit(aircraft.selected_altitude_mcp));
     add_aged_field("nav_alt_fms", aircraft.selected_altitude_fms, simple_emit(aircraft.selected_altitude_fms));
     add_aged_field("nav_heading", aircraft.selected_heading, simple_emit(aircraft.selected_heading));
-    // todo: nav_modes
+    add_aged_field("nav_modes", aircraft.mode_indicators, [&aircraft](std::ostream &os) {
+        bool first = true;
+        auto emit = [&os, &first](bool value, const std::string item) {
+            if (value) {
+                if (!first)
+                    os << " ";
+                os << item;
+                first = false;
+            }
+        };
+
+        auto &indicators = aircraft.mode_indicators.Value();
+        os << "{";
+        emit(indicators.autopilot, "autopilot");
+        emit(indicators.vnav, "vnav");
+        emit(indicators.altitude_hold, "althold");
+        emit(indicators.approach, "approach");
+        emit(indicators.lnav, "lnav");
+        os << "}";
+    });
     add_aged_field("nav_qnh", aircraft.barometric_pressure_setting, simple_emit(aircraft.barometric_pressure_setting, 1));
     add_aged_field("emergency", aircraft.emergency, [&aircraft](std::ostream &os) {
         // clang-format off
