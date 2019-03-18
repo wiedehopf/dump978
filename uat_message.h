@@ -269,7 +269,8 @@ namespace uat {
 
         // 2.2.4.5.6 TARGET STATE element
         boost::optional<SelectedAltitudeType> selected_altitude_type;
-        boost::optional<int> selected_altitude;
+        boost::optional<int> selected_altitude_mcp;
+        boost::optional<int> selected_altitude_fms;
         boost::optional<double> barometric_pressure_setting;
         boost::optional<double> selected_heading;
         boost::optional<ModeIndicators> mode_indicators;

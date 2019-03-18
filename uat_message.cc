@@ -292,10 +292,17 @@ namespace uat {
         // or at byte 25 (§2.2.4.5.7) in payload type 6;
         // the starting offset to use is passed by the caller
 
-        selected_altitude_type = static_cast<SelectedAltitudeType>(raw.Bits(startbyte + 0, 1, startbyte + 0, 1));
         auto raw_altitude = raw.Bits(startbyte + 0, 2, startbyte + 1, 4);
         if (raw_altitude != 0) {
-            selected_altitude = (raw_altitude - 1) * 32;
+            selected_altitude_type = static_cast<SelectedAltitudeType>(raw.Bits(startbyte + 0, 1, startbyte + 0, 1));
+            switch (*selected_altitude_type) {
+            case SelectedAltitudeType::MCP_FCU:
+                selected_altitude_mcp = (raw_altitude - 1) * 32;
+                break;
+            case SelectedAltitudeType::FMS:
+                selected_altitude_fms = (raw_altitude - 1) * 32;
+                break;
+            }
         }
 
         auto raw_bps = raw.Bits(startbyte + 1, 5, startbyte + 2, 5);
@@ -482,7 +489,8 @@ namespace uat {
         EMIT(single_antenna);
         EMIT(nic_supplement);
         EMIT(selected_altitude_type);
-        EMIT(selected_altitude);
+        EMIT(selected_altitude_mcp);
+        EMIT(selected_altitude_fms);
         EMIT(barometric_pressure_setting);
         EMIT(selected_heading);
 

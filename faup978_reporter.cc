@@ -110,8 +110,8 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
     changed |= (last_state.ground_speed && aircraft.ground_speed && std::abs(last_state.ground_speed.Value() - aircraft.ground_speed.Value()) >= 25);
 
     bool immediate = false;
-    immediate |= (aircraft.selected_altitude_type.Changed() > last.report_time);
-    immediate |= (aircraft.selected_altitude.Changed() > last.report_time);
+    immediate |= (aircraft.selected_altitude_mcp.Changed() > last.report_time);
+    immediate |= (aircraft.selected_altitude_fms.Changed() > last.report_time);
     immediate |= (aircraft.selected_heading.Changed() > last.report_time);
     immediate |= (aircraft.mode_indicators.Changed() > last.report_time);
     immediate |= (aircraft.barometric_pressure_setting.Changed() > last.report_time);
@@ -236,7 +236,8 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
     add_aged_field("track", aircraft.true_track, simple_emit(aircraft.true_track, 1));
     add_aged_field("heading_magnetic", aircraft.magnetic_heading, simple_emit(aircraft.magnetic_heading, 1));
     add_aged_field("heading_true", aircraft.true_heading, simple_emit(aircraft.true_heading, 1));
-    add_aged_field("nav_alt", aircraft.selected_altitude, simple_emit(aircraft.selected_altitude));
+    add_aged_field("nav_alt_mcp", aircraft.selected_altitude_mcp, simple_emit(aircraft.selected_altitude_mcp));
+    add_aged_field("nav_alt_fms", aircraft.selected_altitude_fms, simple_emit(aircraft.selected_altitude_fms));
     add_aged_field("nav_heading", aircraft.selected_heading, simple_emit(aircraft.selected_heading));
     // todo: nav_modes
     add_aged_field("nav_qnh", aircraft.barometric_pressure_setting, simple_emit(aircraft.barometric_pressure_setting, 1));
