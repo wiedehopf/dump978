@@ -1084,14 +1084,14 @@ function refreshSelected() {
 			$('#selected_sil').html(silDesc + sampleRate);
 		}
 
-        if (selected.version == null) {
+        if (selected.uat_version == null) {
                 $('#selected_version').text('none');
-        } else if (selected.version == 0) {
-                $('#selected_version').text('v0 (DO-260)');
-        } else if (selected.version == 1) {
-                $('#selected_version').text('v1 (DO-260A)');
-        } else if (selected.version == 2) {
-                $('#selected_version').text('v2 (DO-260B)');
+        } else if (selected.uat_version == 0) {
+                $('#selected_version').text('v0 (DO-282)');
+        } else if (selected.uat_version == 1) {
+                $('#selected_version').text('v1 (DO-282A)');
+        } else if (selected.uat_version == 2) {
+                $('#selected_version').text('v2 (DO-282B)');
         } else {
                 $('#selected_version').text('v' + selected.version);
         }
