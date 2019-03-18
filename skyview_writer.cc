@@ -81,90 +81,95 @@ void SkyviewWriter::PeriodicWrite() {
             break;
         }
 
-        if (aircraft.position) {
+        const std::uint64_t max_age = 60000;
+
+        if (aircraft.position.UpdateAge(now) < max_age) {
             ac_json["lat"] = aircraft.position.Value().first;
             ac_json["lon"] = aircraft.position.Value().second;
             ac_json["seen_pos"] = aircraft.position.UpdateAge(now) / 1000.0;
         }
-        if (aircraft.pressure_altitude) {
+        if (aircraft.pressure_altitude.UpdateAge(now) < max_age) {
             ac_json["alt_baro"] = aircraft.pressure_altitude.Value();
         }
-        if (aircraft.geometric_altitude) {
+        if (aircraft.geometric_altitude.UpdateAge(now) < max_age) {
             ac_json["alt_geom"] = aircraft.pressure_altitude.Value();
         }
-        if (aircraft.nic) {
+        if (aircraft.nic.UpdateAge(now) < max_age) {
             ac_json["nic"] = aircraft.nic.Value();
         }
-        if (aircraft.airground_state && aircraft.airground_state.Value() == AirGroundState::ON_GROUND) {
+        if (aircraft.airground_state.UpdateAge(now) < max_age && aircraft.airground_state.Value() == AirGroundState::ON_GROUND) {
             ac_json["alt_baro"] = "ground";
         }
-        if (aircraft.vertical_velocity_barometric) {
+        if (aircraft.vertical_velocity_barometric.UpdateAge(now) < max_age) {
             ac_json["baro_rate"] = aircraft.vertical_velocity_barometric.Value();
         }
-        if (aircraft.vertical_velocity_geometric) {
+        if (aircraft.vertical_velocity_geometric.UpdateAge(now) < max_age) {
             ac_json["geom_rate"] = aircraft.vertical_velocity_geometric.Value();
         }
-        if (aircraft.ground_speed) {
+        if (aircraft.ground_speed.UpdateAge(now) < max_age) {
             ac_json["gs"] = aircraft.ground_speed.Value();
         }
-        if (aircraft.magnetic_heading) {
+        if (aircraft.magnetic_heading.UpdateAge(now) < max_age) {
             ac_json["mag_heading"] = aircraft.magnetic_heading.Value();
         }
-        if (aircraft.true_heading) {
+        if (aircraft.true_heading.UpdateAge(now) < max_age) {
             ac_json["true_heading"] = aircraft.true_heading.Value();
         }
-        if (aircraft.true_track) {
+        if (aircraft.true_track.UpdateAge(now) < max_age) {
             ac_json["track"] = aircraft.true_track.Value();
         }
-        if (aircraft.emitter_category) {
+        if (aircraft.emitter_category.UpdateAge(now) < max_age) {
             unsigned as_hex = 0xA0 + (aircraft.emitter_category.Value() & 7) + ((aircraft.emitter_category.Value() & 0x18) << 1);
             std::ostringstream os;
             os << std::hex << std::setfill('0') << std::setw(2) << std::uppercase << as_hex;
             ac_json["category"] = os.str();
         }
-        if (aircraft.callsign) {
+        if (aircraft.callsign.UpdateAge(now) < max_age) {
             ac_json["flight"] = aircraft.callsign.Value();
         }
-        if (aircraft.flightplan_id) {
+        if (aircraft.flightplan_id.UpdateAge(now) < max_age) {
             ac_json["squawk"] = aircraft.flightplan_id.Value();
         }
-        if (aircraft.emergency) {
+        if (aircraft.emergency.UpdateAge(now) < max_age) {
             ac_json["emergency"] = aircraft.emergency.Value();
         }
-        if (aircraft.mops_version) {
+        if (aircraft.mops_version.UpdateAge(now) < max_age) {
             ac_json["version"] = aircraft.mops_version.Value(); // FIXME
         }
-        if (aircraft.sil) {
+        if (aircraft.sil.UpdateAge(now) < max_age) {
             ac_json["sil"] = aircraft.sil.Value();
         }
-        if (aircraft.sda) {
+        if (aircraft.sda.UpdateAge(now) < max_age) {
             ac_json["sda"] = aircraft.sda.Value();
         }
-        if (aircraft.sda) {
+        if (aircraft.sda.UpdateAge(now) < max_age) {
             ac_json["nac_p"] = aircraft.nac_p.Value();
         }
-        if (aircraft.sda) {
+        if (aircraft.sda.UpdateAge(now) < max_age) {
             ac_json["nac_v"] = aircraft.nac_v.Value();
         }
-        if (aircraft.sda) {
+        if (aircraft.sda.UpdateAge(now) < max_age) {
             ac_json["nic_baro"] = aircraft.nic_baro.Value();
         }
-        if (aircraft.sil_supplement) {
+        if (aircraft.sil_supplement.UpdateAge(now) < max_age) {
             ac_json["sil_type"] = aircraft.sil_supplement.Value();
         }
-        if (aircraft.gva) {
+        if (aircraft.gva.UpdateAge(now) < max_age) {
             ac_json["gva"] = aircraft.gva.Value();
         }
-        if (aircraft.selected_altitude) {
-            ac_json["nav_altitude"] = aircraft.selected_altitude.Value();
+        if (aircraft.selected_altitude_mcp.UpdateAge(now) < max_age) {
+            ac_json["nav_altitude_mcp"] = aircraft.selected_altitude_mcp.Value();
         }
-        if (aircraft.barometric_pressure_setting) {
+        if (aircraft.selected_altitude_fms.UpdateAge(now) < max_age) {
+            ac_json["nav_altitude_fms"] = aircraft.selected_altitude_fms.Value();
+        }
+        if (aircraft.barometric_pressure_setting.UpdateAge(now) < max_age) {
             ac_json["nav_qnh"] = aircraft.barometric_pressure_setting.Value();
         }
-        if (aircraft.selected_heading) {
+        if (aircraft.selected_heading.UpdateAge(now) < max_age) {
             ac_json["nav_heading"] = aircraft.selected_heading.Value();
         }
-        if (aircraft.mode_indicators) {
+        if (aircraft.mode_indicators.UpdateAge(now) < max_age) {
             auto &modes = aircraft.mode_indicators.Value();
             auto &modes_json = ac_json["nav_modes"] = json::array();
             if (modes.autopilot) {
@@ -184,7 +189,7 @@ void SkyviewWriter::PeriodicWrite() {
             }
         }
         // FIXME: tcas
-        if (aircraft.horizontal_containment) {
+        if (aircraft.horizontal_containment.UpdateAge(now) < max_age) {
             ac_json["rc"] = aircraft.horizontal_containment.Value();
         }
 
