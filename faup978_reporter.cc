@@ -170,7 +170,16 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
 
     std::vector<std::pair<std::string, std::string>> kv;
 
-    static std::map<AddressQualifier, std::string> source_map = {{AddressQualifier::ADSB_ICAO, "A"}, {AddressQualifier::ADSB_OTHER, "A"}, {AddressQualifier::ADSR_OTHER, "A"}, {AddressQualifier::TISB_ICAO, "T"}, {AddressQualifier::TISB_TRACKFILE, "T"}};
+    // clang-format off
+    static std::map<AddressQualifier, std::string> source_map = {
+        {AddressQualifier::ADSB_ICAO, "A"},
+        {AddressQualifier::ADSB_OTHER, "A"},
+        {AddressQualifier::ADSR_OTHER, "A"},
+        {AddressQualifier::TISB_ICAO, "T"},
+        {AddressQualifier::TISB_TRACKFILE, "T"}
+    };
+    // clang-format on
+
     std::string source = value_map(aircraft.address_qualifier, source_map, "?");
 
     auto add_slow_field = [&kv, &source, &last, force_slow](const std::string &k, const AgedFieldBase &f, std::function<void(std::ostream &)> stringize) {
@@ -208,10 +217,12 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
     add_slow_aged_field("nac_v", aircraft.nac_v, simple_emit(aircraft.nac_v));
     add_slow_aged_field("sil", aircraft.sil, simple_emit(aircraft.sil));
     add_slow_aged_field("sil_type", aircraft.sil_supplement, [&aircraft](std::ostream &os) {
+        // clang-format off
         static std::map<SILSupplement, std::string> supplement_map = {
             {SILSupplement::PER_HOUR, "per_hour"},
             {SILSupplement::PER_SAMPLE, "per_sample"},
         };
+        // clang-format on
         os << value_map(aircraft.sil_supplement.Value(), supplement_map, "unknown");
     });
     add_slow_aged_field("nic_baro", aircraft.nic_baro, simple_emit(aircraft.nic_baro));
@@ -242,7 +253,16 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
     // todo: nav_modes
     add_aged_field("nav_qnh", aircraft.barometric_pressure_setting, simple_emit(aircraft.barometric_pressure_setting, 1));
     add_aged_field("emergency", aircraft.emergency, [&aircraft](std::ostream &os) {
-        static std::map<EmergencyPriorityStatus, std::string> emergency_map = {{EmergencyPriorityStatus::NONE, "none"}, {EmergencyPriorityStatus::GENERAL, "general"}, {EmergencyPriorityStatus::MEDICAL, "medical"}, {EmergencyPriorityStatus::MINFUEL, "minfuel"}, {EmergencyPriorityStatus::NORDO, "nordo"}, {EmergencyPriorityStatus::UNLAWFUL, "unlawful"}, {EmergencyPriorityStatus::DOWNED, "downed"}};
+        // clang-format off
+        static std::map<EmergencyPriorityStatus, std::string> emergency_map = {
+            {EmergencyPriorityStatus::NONE, "none"},
+            {EmergencyPriorityStatus::GENERAL, "general"},
+            {EmergencyPriorityStatus::MEDICAL, "medical"},
+            {EmergencyPriorityStatus::MINFUEL, "minfuel"},
+            {EmergencyPriorityStatus::NORDO, "nordo"},
+            {EmergencyPriorityStatus::UNLAWFUL, "unlawful"},
+            {EmergencyPriorityStatus::DOWNED, "downed"}};
+        // clang-format on
         os << value_map(aircraft.emergency.Value(), emergency_map, "unknown");
     });
 
