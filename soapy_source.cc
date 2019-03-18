@@ -76,6 +76,14 @@ namespace dump978 {
         }
     }
 
+    class SoapySDRCategory : public boost::system::error_category {
+      public:
+        const char *name() const noexcept override { return "soapysdr"; }
+        std::string message(int ev) const override { return SoapySDR::errToStr(ev); }
+    };
+
+    static SoapySDRCategory soapysdr_category;
+
     SoapySampleSource::SoapySampleSource(boost::asio::io_service &service, const std::string &device_name, const boost::program_options::variables_map &options) : timer_(service), device_name_(device_name), options_(options) {
         if (!log_handler_registered_.exchange(true)) {
             SoapySDR::registerLogHandler(SoapyLogger);
@@ -254,9 +262,7 @@ namespace dump978 {
             }
 
             if (elements_read < 0) {
-                std::cerr << "SoapySDR reports error: " << SoapySDR::errToStr(elements_read) << std::endl;
-                auto ec = boost::system::error_code(0, boost::system::generic_category());
-                DispatchError(ec);
+                DispatchError(boost::system::error_code{elements_read, soapysdr_category});
                 break;
             }
 
