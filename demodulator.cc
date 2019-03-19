@@ -278,7 +278,7 @@ namespace dump978 {
 
         std::vector<Demodulator::Message> messages;
 
-        const auto trailing_samples = (SYNC_BITS + UPLINK_BITS) * 2;
+        const int trailing_samples = (SYNC_BITS + UPLINK_BITS) * 2;
         if (std::distance(begin, end) < trailing_samples) {
             return messages;
         }
