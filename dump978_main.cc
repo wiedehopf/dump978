@@ -4,6 +4,7 @@
 
 #include <boost/asio/ip/address_v4.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/signal_set.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
@@ -221,6 +222,13 @@ static int realmain(int argc, char **argv) {
         } else {
             receiver->HandleSamples(timestamp, buffer.begin(), buffer.end());
         }
+    });
+
+    boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
+    signals.async_wait([&io_service, &saw_error](const boost::system::error_code &ec, int signum) {
+        std::cerr << "Caught signal " << signum << ", exiting" << std::endl;
+        saw_error = true;
+        io_service.stop();
     });
 
     source->Start();
