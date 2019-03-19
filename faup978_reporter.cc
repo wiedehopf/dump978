@@ -15,7 +15,6 @@ using namespace faup978;
 static const char *const TSV_VERSION = "4U";
 
 void Reporter::Start() {
-    std::cout << "tsv_version\t" << TSV_VERSION << std::endl;
     PeriodicReport();
     PurgeOld();
 }
@@ -291,7 +290,7 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
     }
 
     // generate the line
-    std::cout << "clock" << '\t' << (now / 1000) << '\t';
+    std::cout << "_v" << '\t' << TSV_VERSION << '\t' << "clock" << '\t' << (now / 1000) << '\t';
 
     bool icao = (aircraft.address_qualifier == AddressQualifier::ADSB_ICAO || aircraft.address_qualifier == AddressQualifier::TISB_ICAO);
     std::cout << (icao ? "hexid" : "otherid") << '\t' << std::hex << std::uppercase << std::setfill('0') << std::setw(6) << aircraft.address << std::dec << std::nouppercase << std::setfill(' ');
