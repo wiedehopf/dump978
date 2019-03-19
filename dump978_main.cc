@@ -207,12 +207,16 @@ static int realmain(int argc, char **argv) {
     auto receiver = std::make_shared<SingleThreadReceiver>(format);
     receiver->SetConsumer(std::bind(&MessageDispatch::Dispatch, &dispatch, std::placeholders::_1));
 
-    boost::system::error_code saw_error;
+    bool saw_error = false;
 
     source->SetConsumer([&io_service, &saw_error, receiver](std::uint64_t timestamp, const Bytes &buffer, const boost::system::error_code &ec) {
         if (ec) {
-            std::cerr << "sample source reports error: " << ec.message() << std::endl;
-            saw_error = ec;
+            if (ec == boost::asio::error::eof) {
+                std::cerr << "Sample source reports EOF" << std::endl;
+            } else {
+                std::cerr << "Sample source reports error: " << ec.message() << std::endl;
+                saw_error = true;
+            }
             io_service.stop();
         } else {
             receiver->HandleSamples(timestamp, buffer.begin(), buffer.end());
