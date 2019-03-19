@@ -227,7 +227,13 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
     add_slow_aged_field("nic_baro", aircraft.nic_baro, simple_emit(aircraft.nic_baro));
 
     add_aged_field("airGround", aircraft.airground_state, [&aircraft](std::ostream &os) {
-        static std::map<AirGroundState, std::string> airground_map = {{AirGroundState::AIRBORNE_SUBSONIC, "A+"}, {AirGroundState::AIRBORNE_SUPERSONIC, "A+"}, {AirGroundState::ON_GROUND, "A+"}};
+        // clang-format off
+        static std::map<AirGroundState, std::string> airground_map = {
+            {AirGroundState::AIRBORNE_SUBSONIC, "A+"},
+            {AirGroundState::AIRBORNE_SUPERSONIC, "A+"},
+            {AirGroundState::ON_GROUND, "A+"}
+        };
+        // clang-format on
         os << value_map(aircraft.airground_state.Value(), airground_map, "?");
     });
     add_aged_field("squawk", aircraft.flightplan_id, [&aircraft](std::ostream &os) { os << '{' << aircraft.flightplan_id.Value() << '}'; });
