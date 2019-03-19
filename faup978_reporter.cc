@@ -218,8 +218,8 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
     add_slow_aged_field("sil_type", aircraft.sil_supplement, [&aircraft](std::ostream &os) {
         // clang-format off
         static std::map<SILSupplement, std::string> supplement_map = {
-            {SILSupplement::PER_HOUR, "per_hour"},
-            {SILSupplement::PER_SAMPLE, "per_sample"},
+            {SILSupplement::PER_HOUR, "perhour"},
+            {SILSupplement::PER_SAMPLE, "persample"},
         };
         // clang-format on
         os << value_map(aircraft.sil_supplement.Value(), supplement_map, "unknown");
@@ -275,7 +275,7 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
         static std::map<EmergencyPriorityStatus, std::string> emergency_map = {
             {EmergencyPriorityStatus::NONE, "none"},
             {EmergencyPriorityStatus::GENERAL, "general"},
-            {EmergencyPriorityStatus::MEDICAL, "medical"},
+            {EmergencyPriorityStatus::MEDICAL, "lifeguard"},
             {EmergencyPriorityStatus::MINFUEL, "minfuel"},
             {EmergencyPriorityStatus::NORDO, "nordo"},
             {EmergencyPriorityStatus::UNLAWFUL, "unlawful"},
@@ -301,7 +301,7 @@ void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const Airc
             {AddressQualifier::ADSB_ICAO, "adsb_icao"},
             {AddressQualifier::ADSB_OTHER, "adsb_other"},
             {AddressQualifier::TISB_ICAO, "tisb_icao"},
-            {AddressQualifier::TISB_TRACKFILE, "tisb_other"},
+            {AddressQualifier::TISB_TRACKFILE, "tisb_trackfile"},
             {AddressQualifier::VEHICLE, "vehicle"},
             {AddressQualifier::FIXED_BEACON, "fixed_beacon"},
             {AddressQualifier::ADSR_OTHER, "adsr_other"}
