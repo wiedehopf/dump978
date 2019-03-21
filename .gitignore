@@ -1,7 +1,5 @@
 *~
 *.o
-dump978
-extract_nexrad
-uat2esnt
-uat2json
-uat2text
+dump978-fa
+skyview978
+faup978
