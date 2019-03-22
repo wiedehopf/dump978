@@ -1,5 +1,5 @@
-dump978-fa (3.7.0) UNRELEASED; urgency=medium
+dump978-fa (3.7.0) stable; urgency=medium
 
   * Initial release.
 
- -- Oliver Jowett <oliver@mutability.co.uk>  Mon, 04 Mar 2019 14:25:58 +0000
+ -- Oliver Jowett <oliver@mutability.co.uk>  Fri, 22 Mar 2019 15:57:23 +0000
