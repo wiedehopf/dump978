@@ -17,7 +17,7 @@
 
 #include "uat_message.h"
 
-namespace uat {
+namespace flightaware::uat {
     class AgedFieldBase {
       public:
         operator bool() const { return Valid(); }
@@ -136,7 +136,7 @@ namespace uat {
             return std::accumulate(rssi.begin(), rssi.end(), 0.0) / std::min<double>(messages, rssi.size());
         }
 
-        void UpdateFromMessage(const uat::AdsbMessage &message);
+        void UpdateFromMessage(const AdsbMessage &message);
     };
 
     class Tracker : public std::enable_shared_from_this<Tracker> {
@@ -159,7 +159,7 @@ namespace uat {
       private:
         Tracker(boost::asio::io_service &service, std::chrono::milliseconds timeout) : service_(service), strand_(service), timer_(service), timeout_(timeout) {}
 
-        void HandleMessage(const uat::AdsbMessage &message);
+        void HandleMessage(const AdsbMessage &message);
 
         boost::asio::io_service &service_;
         boost::asio::io_service::strand strand_;
@@ -168,6 +168,6 @@ namespace uat {
         MapType aircraft_;
         std::uint32_t total_messages_ = 0;
     };
-}; // namespace uat
+}; // namespace flightaware::uat
 
 #endif

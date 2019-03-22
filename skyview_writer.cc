@@ -13,8 +13,8 @@
 
 #include "track.h"
 
-using namespace uat;
-using namespace uat::skyview;
+using namespace flightaware::uat;
+using namespace flightaware::skyview;
 
 void SkyviewWriter::Start() {
     nlohmann::json receiver_json;

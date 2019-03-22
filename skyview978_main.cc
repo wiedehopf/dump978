@@ -14,8 +14,8 @@
 #include "socket_input.h"
 #include "uat_message.h"
 
-using namespace uat;
-using namespace uat::skyview;
+using namespace flightaware::uat;
+using namespace flightaware::skyview;
 
 namespace po = boost::program_options;
 using boost::asio::ip::tcp;

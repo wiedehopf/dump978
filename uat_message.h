@@ -17,7 +17,7 @@
 #include "common.h"
 #include "uat_protocol.h"
 
-namespace uat {
+namespace flightaware::uat {
     class RawMessage {
       public:
         RawMessage() : type_(MessageType::INVALID), received_at_(0), errors_(0), rssi_(0) {}
@@ -150,7 +150,7 @@ namespace uat {
 
     std::ostream &operator<<(std::ostream &os, const RawMessage &message);
 
-    typedef std::vector<uat::RawMessage> MessageVector;
+    typedef std::vector<RawMessage> MessageVector;
     typedef std::shared_ptr<MessageVector> SharedMessageVector;
 
     // 2.2.4.5.1.2 "ADDRESS QUALIFIER" field
@@ -283,6 +283,6 @@ namespace uat {
         void DecodeMS(const RawMessage &raw);
         void DecodeAUXSV(const RawMessage &raw);
     };
-} // namespace uat
+} // namespace flightaware::uat
 
 #endif

@@ -4,12 +4,12 @@
 
 #include "track.h"
 
-using namespace uat;
-
 #include <iomanip>
 #include <iostream>
 
-void AircraftState::UpdateFromMessage(const uat::AdsbMessage &message) {
+using namespace flightaware::uat;
+
+void AircraftState::UpdateFromMessage(const AdsbMessage &message) {
     if (message.received_at < last_message_time) {
         // Out of order message
         return;
@@ -152,7 +152,7 @@ void Tracker::HandleMessages(SharedMessageVector messages) {
     });
 }
 
-void Tracker::HandleMessage(const uat::AdsbMessage &message) {
+void Tracker::HandleMessage(const AdsbMessage &message) {
     AddressKey key{message.address_qualifier, message.address};
     auto i = aircraft_.find(key);
     if (i == aircraft_.end()) {

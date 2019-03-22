@@ -11,7 +11,7 @@
 
 #include "common.h"
 
-namespace dump978 {
+namespace flightaware::uat {
     // Describes a sample data layout:
     //   CU8  - interleaved I/Q data, 8 bit unsigned integers
     //   CS8  - interleaved I/Q data, 8 bit signed integers
@@ -41,19 +41,19 @@ namespace dump978 {
       public:
         typedef std::shared_ptr<SampleConverter> Pointer;
 
-        SampleConverter(SampleFormat format) : format_(format), bytes_per_sample_(dump978::BytesPerSample(format)) {}
+        SampleConverter(SampleFormat format) : format_(format), bytes_per_sample_(flightaware::uat::BytesPerSample(format)) {}
 
         virtual ~SampleConverter() {}
 
         // Read samples from `begin` .. `end` and write one phase value per sample to
         // `out`. The input buffer should contain an integral number of samples
         // (trailing partial samples are ignored, not buffered).
-        virtual void ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) = 0;
+        virtual void ConvertPhase(Bytes::const_iterator begin, Bytes::const_iterator end, PhaseBuffer::iterator out) = 0;
 
         // Read samples from `begin` .. `end` and write one magnitude-squared value
         // per sample to `out`. The input buffer should contain an integral number of
         // samples (trailing partial samples are ignored, not buffered).
-        virtual void ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) = 0;
+        virtual void ConvertMagSq(Bytes::const_iterator begin, Bytes::const_iterator end, std::vector<double>::iterator out) = 0;
 
         SampleFormat Format() const { return format_; }
         unsigned BytesPerSample() const { return bytes_per_sample_; }
@@ -70,8 +70,8 @@ namespace dump978 {
       public:
         CU8Converter();
 
-        void ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) override;
-        void ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) override;
+        void ConvertPhase(Bytes::const_iterator begin, Bytes::const_iterator end, PhaseBuffer::iterator out) override;
+        void ConvertMagSq(Bytes::const_iterator begin, Bytes::const_iterator end, std::vector<double>::iterator out) override;
 
       private:
         union cu8_alias {
@@ -87,8 +87,8 @@ namespace dump978 {
       public:
         CS8Converter();
 
-        void ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) override;
-        void ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) override;
+        void ConvertPhase(Bytes::const_iterator begin, Bytes::const_iterator end, PhaseBuffer::iterator out) override;
+        void ConvertMagSq(Bytes::const_iterator begin, Bytes::const_iterator end, std::vector<double>::iterator out) override;
 
       private:
         union cs8_alias {
@@ -103,16 +103,16 @@ namespace dump978 {
     class CS16HConverter : public SampleConverter {
       public:
         CS16HConverter() : SampleConverter(SampleFormat::CS16H) {}
-        void ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) override;
-        void ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) override;
+        void ConvertPhase(Bytes::const_iterator begin, Bytes::const_iterator end, PhaseBuffer::iterator out) override;
+        void ConvertMagSq(Bytes::const_iterator begin, Bytes::const_iterator end, std::vector<double>::iterator out) override;
     };
 
     class CF32HConverter : public SampleConverter {
       public:
         CF32HConverter() : SampleConverter(SampleFormat::CF32H) {}
-        void ConvertPhase(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, uat::PhaseBuffer::iterator out) override;
-        void ConvertMagSq(uat::Bytes::const_iterator begin, uat::Bytes::const_iterator end, std::vector<double>::iterator out) override;
+        void ConvertPhase(Bytes::const_iterator begin, Bytes::const_iterator end, PhaseBuffer::iterator out) override;
+        void ConvertMagSq(Bytes::const_iterator begin, Bytes::const_iterator end, std::vector<double>::iterator out) override;
     };
-}; // namespace dump978
+}; // namespace flightaware::uat
 
 #endif

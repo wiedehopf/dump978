@@ -21,11 +21,11 @@
 #include "common.h"
 #include "convert.h"
 
-namespace dump978 {
+namespace flightaware::uat {
     class SampleSource : public std::enable_shared_from_this<SampleSource> {
       public:
         typedef std::shared_ptr<SampleSource> Pointer;
-        typedef std::function<void(std::uint64_t, const uat::Bytes &, const boost::system::error_code &ec)> Consumer;
+        typedef std::function<void(std::uint64_t, const Bytes &, const boost::system::error_code &ec)> Consumer;
 
         virtual ~SampleSource() {}
 
@@ -39,7 +39,7 @@ namespace dump978 {
       protected:
         SampleSource() {}
 
-        void DispatchBuffer(std::uint64_t timestamp, const uat::Bytes &buffer) {
+        void DispatchBuffer(std::uint64_t timestamp, const Bytes &buffer) {
             if (consumer_) {
                 consumer_(timestamp, buffer, boost::system::error_code());
             }
@@ -47,7 +47,7 @@ namespace dump978 {
 
         void DispatchError(const boost::system::error_code &ec) {
             if (consumer_) {
-                consumer_(0, uat::Bytes(), ec);
+                consumer_(0, Bytes(), ec);
             }
         }
 
@@ -90,7 +90,7 @@ namespace dump978 {
         std::ifstream stream_;
         boost::asio::steady_timer timer_;
         std::chrono::steady_clock::time_point next_block_;
-        uat::Bytes block_;
+        Bytes block_;
         std::uint64_t timestamp_;
     };
 
@@ -121,9 +121,9 @@ namespace dump978 {
         unsigned alignment_;
         std::size_t samples_per_second_;
         boost::asio::posix::stream_descriptor stream_;
-        uat::Bytes block_;
+        Bytes block_;
         std::size_t used_;
     };
-}; // namespace dump978
+}; // namespace flightaware::uat
 
 #endif

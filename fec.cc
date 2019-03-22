@@ -9,9 +9,10 @@ extern "C" {
 #include "fec/rs.h"
 }
 
-using namespace uat::fec;
+using namespace flightaware::uat;
+using namespace flightaware::uat::fec;
 
-uat::FEC::FEC(void) {
+FEC::FEC(void) {
     rs_downlink_short_ = ::init_rs_char(
         /* symsize */ 8, /* gfpoly */ DOWNLINK_SHORT_POLY, /* fcr */ 120,
         /* prim */ 1, /* nroots */ DOWNLINK_SHORT_ROOTS,
@@ -26,14 +27,14 @@ uat::FEC::FEC(void) {
                                 /* pad */ UPLINK_BLOCK_PAD);
 }
 
-uat::FEC::~FEC(void) {
+FEC::~FEC(void) {
     ::free_rs_char(rs_downlink_short_);
     ::free_rs_char(rs_downlink_long_);
     ::free_rs_char(rs_uplink_);
 }
 
-std::tuple<bool, uat::Bytes, unsigned> uat::FEC::CorrectDownlink(const Bytes &raw, const std::vector<std::size_t> &erasures) {
-    using R = std::tuple<bool, uat::Bytes, unsigned>;
+std::tuple<bool, Bytes, unsigned> FEC::CorrectDownlink(const Bytes &raw, const std::vector<std::size_t> &erasures) {
+    using R = std::tuple<bool, Bytes, unsigned>;
 
     if (raw.size() != DOWNLINK_LONG_BYTES) {
         return R{false, {}, 0};
@@ -91,8 +92,8 @@ std::tuple<bool, uat::Bytes, unsigned> uat::FEC::CorrectDownlink(const Bytes &ra
     return R{false, {}, 0};
 }
 
-std::tuple<bool, uat::Bytes, unsigned> uat::FEC::CorrectUplink(const Bytes &raw, const std::vector<std::size_t> &erasures) {
-    using R = std::tuple<bool, uat::Bytes, unsigned>;
+std::tuple<bool, Bytes, unsigned> FEC::CorrectUplink(const Bytes &raw, const std::vector<std::size_t> &erasures) {
+    using R = std::tuple<bool, Bytes, unsigned>;
 
     if (raw.size() != UPLINK_BYTES) {
         return R{false, {}, 0};

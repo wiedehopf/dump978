@@ -7,74 +7,74 @@
 #include <boost/thread/locks.hpp>
 #include <mutex>
 
-namespace uat {
-    MessageDispatch::MessageDispatch() : next_handle_(0), busy_(0) {}
+using namespace flightaware::uat;
 
-    MessageDispatch::Handle MessageDispatch::AddClient(MessageHandler handler) {
-        std::unique_lock<std::recursive_mutex> lock(mutex_);
+MessageDispatch::MessageDispatch() : next_handle_(0), busy_(0) {}
 
-        Handle h = next_handle_++;
-        clients_[h] = {handler, false};
-        return h;
-    }
+MessageDispatch::Handle MessageDispatch::AddClient(MessageHandler handler) {
+    std::unique_lock<std::recursive_mutex> lock(mutex_);
 
-    void MessageDispatch::RemoveClient(Handle h) {
-        std::unique_lock<std::recursive_mutex> lock(mutex_);
+    Handle h = next_handle_++;
+    clients_[h] = {handler, false};
+    return h;
+}
 
-        auto i = clients_.find(h);
-        if (i == clients_.end())
-            return;
+void MessageDispatch::RemoveClient(Handle h) {
+    std::unique_lock<std::recursive_mutex> lock(mutex_);
 
-        i->second.deleted = true;
-        PurgeDeadClients();
-    }
+    auto i = clients_.find(h);
+    if (i == clients_.end())
+        return;
 
-    template <typename T> class BusyCounter {
-      public:
-        BusyCounter(T &var) : var_(var), owned_(true) { ++var_; }
+    i->second.deleted = true;
+    PurgeDeadClients();
+}
 
-        BusyCounter(const T &) = delete;
-        BusyCounter &operator=(const T &) = delete;
+template <typename T> class BusyCounter {
+  public:
+    BusyCounter(T &var) : var_(var), owned_(true) { ++var_; }
 
-        ~BusyCounter() { release(); }
+    BusyCounter(const T &) = delete;
+    BusyCounter &operator=(const T &) = delete;
 
-        void release() {
-            if (owned_) {
-                --var_;
-                owned_ = false;
-            }
-        }
+    ~BusyCounter() { release(); }
 
-      private:
-        T &var_;
-        bool owned_;
-    };
-
-    void MessageDispatch::Dispatch(SharedMessageVector messages) {
-        std::unique_lock<std::recursive_mutex> lock(mutex_);
-
-        BusyCounter<unsigned> counter(busy_);
-        for (auto i = clients_.begin(); i != clients_.end(); ++i) {
-            Client &c = i->second;
-            if (!c.deleted)
-                c.handler(messages);
-        }
-        counter.release();
-
-        PurgeDeadClients();
-    }
-
-    void MessageDispatch::PurgeDeadClients() {
-        // caller must lock!
-        if (busy_)
-            return;
-
-        for (auto i = clients_.begin(); i != clients_.end();) {
-            Client &c = i->second;
-            if (c.deleted)
-                clients_.erase(i++);
-            else
-                ++i;
+    void release() {
+        if (owned_) {
+            --var_;
+            owned_ = false;
         }
     }
-} // namespace uat
+
+  private:
+    T &var_;
+    bool owned_;
+};
+
+void MessageDispatch::Dispatch(SharedMessageVector messages) {
+    std::unique_lock<std::recursive_mutex> lock(mutex_);
+
+    BusyCounter<unsigned> counter(busy_);
+    for (auto i = clients_.begin(); i != clients_.end(); ++i) {
+        Client &c = i->second;
+        if (!c.deleted)
+            c.handler(messages);
+    }
+    counter.release();
+
+    PurgeDeadClients();
+}
+
+void MessageDispatch::PurgeDeadClients() {
+    // caller must lock!
+    if (busy_)
+        return;
+
+    for (auto i = clients_.begin(); i != clients_.end();) {
+        Client &c = i->second;
+        if (c.deleted)
+            clients_.erase(i++);
+        else
+            ++i;
+    }
+}

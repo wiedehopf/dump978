@@ -7,7 +7,7 @@
 #ifndef UAT_PROTOCOL_H
 #define UAT_PROTOCOL_H
 
-namespace uat {
+namespace flightaware::uat {
     enum class MessageType { DOWNLINK_SHORT, DOWNLINK_LONG, UPLINK, INVALID };
 
     const unsigned SYNC_BITS = 36;
@@ -48,6 +48,6 @@ namespace uat {
         const int DOWNLINK_LONG_PAD = 255 - DOWNLINK_LONG_BYTES;
         const int UPLINK_BLOCK_PAD = 255 - UPLINK_BLOCK_BYTES;
     }; // namespace fec
-};     // namespace uat
+};     // namespace flightaware::uat
 
 #endif

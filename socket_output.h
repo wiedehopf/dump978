@@ -17,13 +17,13 @@
 #include "message_dispatch.h"
 #include "uat_message.h"
 
-namespace dump978 {
+namespace flightaware::uat {
     class SocketOutput : public std::enable_shared_from_this<SocketOutput> {
       public:
         typedef std::shared_ptr<SocketOutput> Pointer;
 
         virtual void Start();
-        void Write(uat::SharedMessageVector messages);
+        void Write(SharedMessageVector messages);
         virtual void Close();
 
         void SetCloseNotifier(std::function<void()> notifier) { close_notifier_ = notifier; }
@@ -34,7 +34,7 @@ namespace dump978 {
         SocketOutput(boost::asio::io_service &service_, boost::asio::ip::tcp::socket &&socket_);
         std::ostringstream &Buf() { return outbuf_; }
 
-        virtual void InternalWrite(uat::SharedMessageVector messages) = 0;
+        virtual void InternalWrite(SharedMessageVector messages) = 0;
 
       private:
         void HandleError(const boost::system::error_code &ec);
@@ -58,7 +58,7 @@ namespace dump978 {
         static Pointer Create(boost::asio::io_service &service, boost::asio::ip::tcp::socket &&socket) { return Pointer(new RawOutput(service, std::move(socket))); }
 
       protected:
-        void InternalWrite(uat::SharedMessageVector messages) override;
+        void InternalWrite(SharedMessageVector messages) override;
 
       private:
         RawOutput(boost::asio::io_service &service_, boost::asio::ip::tcp::socket &&socket_) : SocketOutput(service_, std::move(socket_)) {}
@@ -70,7 +70,7 @@ namespace dump978 {
         static Pointer Create(boost::asio::io_service &service, boost::asio::ip::tcp::socket &&socket) { return Pointer(new JsonOutput(service, std::move(socket))); }
 
       protected:
-        void InternalWrite(uat::SharedMessageVector messages) override;
+        void InternalWrite(SharedMessageVector messages) override;
 
       private:
         JsonOutput(boost::asio::io_service &service_, boost::asio::ip::tcp::socket &&socket_) : SocketOutput(service_, std::move(socket_)) {}
@@ -82,13 +82,13 @@ namespace dump978 {
         typedef std::function<SocketOutput::Pointer(boost::asio::io_service &, boost::asio::ip::tcp::socket &&)> ConnectionFactory;
 
         // factory method, this class must always be constructed via make_shared
-        static Pointer Create(boost::asio::io_service &service, const boost::asio::ip::tcp::endpoint &endpoint, uat::MessageDispatch &dispatch, ConnectionFactory factory) { return Pointer(new SocketListener(service, endpoint, dispatch, factory)); }
+        static Pointer Create(boost::asio::io_service &service, const boost::asio::ip::tcp::endpoint &endpoint, MessageDispatch &dispatch, ConnectionFactory factory) { return Pointer(new SocketListener(service, endpoint, dispatch, factory)); }
 
         void Start();
         void Close();
 
       private:
-        SocketListener(boost::asio::io_service &service, const boost::asio::ip::tcp::endpoint &endpoint, uat::MessageDispatch &dispatch, ConnectionFactory factory);
+        SocketListener(boost::asio::io_service &service, const boost::asio::ip::tcp::endpoint &endpoint, MessageDispatch &dispatch, ConnectionFactory factory);
 
         void Accept();
 
@@ -97,9 +97,9 @@ namespace dump978 {
         boost::asio::ip::tcp::endpoint endpoint_;
         boost::asio::ip::tcp::socket socket_;
         boost::asio::ip::tcp::endpoint peer_;
-        uat::MessageDispatch &dispatch_;
+        MessageDispatch &dispatch_;
         ConnectionFactory factory_;
     };
-}; // namespace dump978
+}; // namespace flightaware::uat
 
 #endif

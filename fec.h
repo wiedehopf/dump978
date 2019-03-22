@@ -11,7 +11,7 @@
 
 #include "common.h"
 
-namespace uat {
+namespace flightaware::uat {
     // Deinterleaving and error-correction of UAT messages.
     // This delegates to the "fec" library (in fec/) for the actual Reed-Solomon
     // error-correction work.
@@ -30,7 +30,7 @@ namespace uat {
         //    uncorrectable
         // `erasures` is an optional vector of indexes into `raw` that should be
         // handled as erasures
-        std::tuple<bool, uat::Bytes, unsigned> CorrectDownlink(const Bytes &raw, const std::vector<std::size_t> &erasures = {});
+        std::tuple<bool, Bytes, unsigned> CorrectDownlink(const Bytes &raw, const std::vector<std::size_t> &erasures = {});
 
         // Given UPLINK_BYTES of demodulated data, returns a tuple of:
         //    bool     - true if the message is good, false if it was uncorrectable.
@@ -41,13 +41,13 @@ namespace uat {
         //    uncorrectable
         // `erasures` is an optional vector of indexes into `raw` that should be
         // handled as erasures
-        std::tuple<bool, uat::Bytes, unsigned> CorrectUplink(const Bytes &raw, const std::vector<std::size_t> &erasures = {});
+        std::tuple<bool, Bytes, unsigned> CorrectUplink(const Bytes &raw, const std::vector<std::size_t> &erasures = {});
 
       private:
         void *rs_uplink_;
         void *rs_downlink_short_;
         void *rs_downlink_long_;
     };
-}; // namespace uat
+}; // namespace flightaware::uat
 
 #endif

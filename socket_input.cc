@@ -4,7 +4,7 @@
 
 #include "socket_input.h"
 
-using namespace uat;
+using namespace flightaware::uat;
 using boost::asio::ip::tcp;
 
 #include <iostream>
@@ -178,7 +178,7 @@ static inline int hexvalue(char c) {
     }
 }
 
-boost::optional<uat::RawMessage> RawInput::ParseLine(const std::string &line) {
+boost::optional<RawMessage> RawInput::ParseLine(const std::string &line) {
     if (line.size() < 2) {
         // too short
         return boost::none;
@@ -202,7 +202,7 @@ boost::optional<uat::RawMessage> RawInput::ParseLine(const std::string &line) {
     }
 
     // parse hex digits
-    uat::Bytes payload;
+    Bytes payload;
     payload.reserve(hexlength / 2);
 
     for (decltype(eod) i = 1; i < eod; i += 2) {
@@ -255,5 +255,5 @@ boost::optional<uat::RawMessage> RawInput::ParseLine(const std::string &line) {
         i = semicolon + 1;
     }
 
-    return uat::RawMessage(std::move(payload), t, rs, rssi);
+    return RawMessage(std::move(payload), t, rs, rssi);
 }

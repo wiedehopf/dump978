@@ -9,8 +9,8 @@
 #include <iostream>
 #include <sstream>
 
-using namespace uat;
-using namespace faup978;
+using namespace flightaware::uat;
+using namespace flightaware::faup978;
 
 static const char *const TSV_VERSION = "4U";
 
@@ -74,7 +74,7 @@ void Reporter::PeriodicReport() {
     }));
 }
 
-void Reporter::ReportOneAircraft(const uat::Tracker::AddressKey &key, const AircraftState &aircraft, std::uint64_t now) {
+void Reporter::ReportOneAircraft(const Tracker::AddressKey &key, const AircraftState &aircraft, std::uint64_t now) {
     auto &last = reported_[key];
     auto &last_state = last.report_state;
 

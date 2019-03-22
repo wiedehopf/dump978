@@ -19,8 +19,7 @@
 #include "soapy_source.h"
 #include "socket_output.h"
 
-using namespace uat;
-using namespace dump978;
+using namespace flightaware::uat;
 
 namespace po = boost::program_options;
 using boost::asio::ip::tcp;
@@ -50,7 +49,7 @@ void validate(boost::any &v, const std::vector<std::string> &values, listen_opti
 }
 
 // Specializations of validate for --format
-namespace dump978 {
+namespace flightaware::uat {
     void validate(boost::any &v, const std::vector<std::string> &values, SampleFormat *target_type, int) {
         po::validators::check_first_occurrence(v);
         const std::string &s = po::validators::get_single_string(values);
@@ -70,7 +69,7 @@ namespace dump978 {
 
         v = boost::any(entry->second);
     }
-} // namespace dump978
+} // namespace flightaware::uat
 
 #define EXIT_NO_RESTART (64)
 

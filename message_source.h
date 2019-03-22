@@ -9,17 +9,17 @@
 
 #include "uat_message.h"
 
-namespace uat {
+namespace flightaware::uat {
     class MessageSource {
       public:
-        typedef std::function<void(uat::SharedMessageVector)> Consumer;
+        typedef std::function<void(SharedMessageVector)> Consumer;
 
         virtual ~MessageSource() {}
 
         void SetConsumer(Consumer consumer) { consumer_ = consumer; }
 
       protected:
-        void DispatchMessages(uat::SharedMessageVector messages) {
+        void DispatchMessages(SharedMessageVector messages) {
             if (consumer_) {
                 consumer_(messages);
             }
@@ -28,6 +28,6 @@ namespace uat {
       private:
         Consumer consumer_;
     };
-}; // namespace uat
+}; // namespace flightaware::uat
 
 #endif
