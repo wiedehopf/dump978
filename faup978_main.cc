@@ -100,7 +100,7 @@ static int realmain(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-#if 0
+#ifndef DEBUG_EXCEPTIONS
     try {
         return realmain(argc, argv);
     } catch (...) {

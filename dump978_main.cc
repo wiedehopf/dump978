@@ -246,10 +246,14 @@ static int realmain(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
+#ifndef DEBUG_EXCEPTIONS
     try {
         return realmain(argc, argv);
     } catch (...) {
         std::cerr << "Uncaught exception: " << boost::current_exception_diagnostic_information() << std::endl;
         return 2;
     }
+#else
+    return realmain(argc, argv);
+#endif
 }
