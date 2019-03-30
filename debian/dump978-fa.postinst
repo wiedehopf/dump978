@@ -31,6 +31,8 @@ case "$1" in
 
         # plugdev required for USB access
         adduser "$RUNAS" plugdev
+        # audio required for soapy-sdr in some cases
+        adduser "$RUNAS" audio
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
