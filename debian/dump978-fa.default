@@ -9,6 +9,6 @@
 # dump978-fa won't automatically start unless ENABLED=yes
 ENABLED=yes
 
-RECEIVER_OPTIONS="--sdr 'driver=rtlsdr' --format CS8"
+RECEIVER_OPTIONS="--sdr driver=rtlsdr --format CS8"
 DECODER_OPTIONS=""
 NET_OPTIONS="--raw-port 30978 --json-port 30979"
