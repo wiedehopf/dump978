@@ -103,7 +103,7 @@ static int realmain(int argc, char **argv) {
         }
     });
 
-    boost::optional<std::pair<double, double>> location = boost::none;
+    boost::optional<std::pair<double, double>> location = boost::make_optional(false, std::make_pair(0.0, 0.0));
     if (opts.count("lat") && opts.count("lon")) {
         location.emplace(opts["lat"].as<double>(), opts["lon"].as<double>());
     }
