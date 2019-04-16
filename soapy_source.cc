@@ -83,6 +83,56 @@ static SampleFormat SoapyToFormat(std::string format) {
     }
 }
 
+#if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION >= 0x00060000)
+static SoapySDR::Kwargs KwargsFromString(const std::string &markup) { return SoapySDR::KwargsFromString(markup); }
+#else
+// Compatibility shim
+static std::string trim(std::string::const_iterator i1, std::string::const_iterator i2) {
+    auto begin = i1;
+    while (begin < i2 && std::isspace(*begin))
+        ++begin;
+
+    auto end = i2;
+    while (begin < end && std::isspace(end[-1]))
+        --end;
+
+    return std::string(begin, end);
+}
+
+static SoapySDR::Kwargs KwargsFromString(const std::string &markup) {
+    SoapySDR::Kwargs kwargs;
+
+    auto scan = markup.begin();
+    while (scan < markup.end()) {
+        auto key_start = scan;
+        while (scan < markup.end() && *scan != '=' && *scan != ',') {
+            ++scan;
+        }
+
+        std::string key = trim(key_start, scan);
+        if (scan == markup.end() || *scan == ',') {
+            ++scan;
+            kwargs[key] = "";
+        } else {
+            ++scan;
+            auto value_start = scan;
+            while (scan < markup.end() && *scan != ',') {
+                ++scan;
+            }
+
+            std::string value = trim(value_start, scan);
+            ++scan;
+
+            if (!key.empty()) {
+                kwargs[key] = value;
+            }
+        }
+    }
+
+    return kwargs;
+}
+#endif
+
 class SoapySDRCategory : public boost::system::error_category {
   public:
     const char *name() const noexcept override { return "soapysdr"; }
@@ -157,14 +207,10 @@ void SoapySampleSource::Init() {
     }
 
     if (options_.count("sdr-device-settings")) {
-#if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION >= 0x00060000)
-        for (auto kv : SoapySDR::KwargsFromString(options_["sdr-device-settings"].as<std::string>())) {
+        for (auto kv : KwargsFromString(options_["sdr-device-settings"].as<std::string>())) {
             std::cerr << "SoapySDR: using device setting " << kv.first << "=" << kv.second << std::endl;
             device_->writeSetting(kv.first, kv.second);
         }
-#else
-        std::cerr << "SoapySDR: --sdr-device-settings option ignored in this build" << std::endl;
-#endif
     }
 
     if (options_.count("format")) {
@@ -195,14 +241,10 @@ void SoapySampleSource::Init() {
     }
 
     if (options_.count("sdr-stream-settings")) {
-#if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION >= 0x00060000)
-        for (auto kv : SoapySDR::KwargsFromString(options_["sdr-stream-settings"].as<std::string>())) {
+        for (auto kv : KwargsFromString(options_["sdr-stream-settings"].as<std::string>())) {
             std::cerr << "SoapySDR: using stream setting " << kv.first << "=" << kv.second << std::endl;
             stream_settings[kv.first] = kv.second;
         }
-#else
-        std::cerr << "SoapySDR: --sdr-stream-settings options ignored in this build" << std::endl;
-#endif
     }
 
     try {
