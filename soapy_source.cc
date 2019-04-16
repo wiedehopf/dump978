@@ -158,7 +158,7 @@ void SoapySampleSource::Init() {
 
     if (options_.count("sdr-device-settings")) {
 #if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION >= 0x00060000)
-        for (auto kv : SoapySDR::KwargsFromString(options_["sdr-stream-settings"].as<std::string>())) {
+        for (auto kv : SoapySDR::KwargsFromString(options_["sdr-device-settings"].as<std::string>())) {
             std::cerr << "SoapySDR: using device setting " << kv.first << "=" << kv.second << std::endl;
             device_->writeSetting(kv.first, kv.second);
         }
