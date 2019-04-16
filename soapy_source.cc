@@ -3,6 +3,7 @@
 // Licensed under the 2-clause BSD license; see the LICENSE file
 
 #include "soapy_source.h"
+#include "exception.h"
 
 #include <iomanip>
 #include <iostream>
@@ -100,9 +101,14 @@ SoapySampleSource::SoapySampleSource(boost::asio::io_service &service, const std
 SoapySampleSource::~SoapySampleSource() { Stop(); }
 
 void SoapySampleSource::Init() {
-    device_ = {SoapySDR::Device::make(device_name_), &SoapySDR::Device::unmake};
+    try {
+        device_ = {SoapySDR::Device::make(device_name_), &SoapySDR::Device::unmake};
+    } catch (const std::runtime_error &err) {
+        throw config_error(std::string("No matching SoapySDR device found (cause: ") + err.what() + ")");
+    }
+
     if (!device_) {
-        throw std::runtime_error("no suitable device found");
+        throw config_error("No matching SoapySDR device found");
     }
 
     // hacky mchackerson
@@ -112,7 +118,7 @@ void SoapySampleSource::Init() {
 
     if (options_.count("sdr-auto-gain")) {
         if (!device_->hasGainMode(SOAPY_SDR_RX, 0)) {
-            throw std::runtime_error("device does not support automatic gain mode");
+            throw config_error("Device does not support automatic gain mode");
         }
         std::cerr << "SoapySDR: using automatic gain" << std::endl;
         device_->setGainMode(SOAPY_SDR_RX, 0, true);
@@ -171,12 +177,12 @@ void SoapySampleSource::Init() {
         soapy_format = device_->getNativeStreamFormat(SOAPY_SDR_RX, 0, fullScale);
         format_ = SoapyToFormat(soapy_format);
         if (format_ == SampleFormat::UNKNOWN) {
-            throw std::runtime_error("Unsupported native SDR format: " + soapy_format + "; try specifying --format");
+            throw config_error("Unsupported native SDR format: " + soapy_format + "; try specifying --format");
         }
     } else {
         soapy_format = FormatToSoapy(format_);
         if (soapy_format.empty()) {
-            throw std::runtime_error("unsupported sample format");
+            throw config_error("Unsupported sample format");
         }
     }
 
@@ -199,9 +205,14 @@ void SoapySampleSource::Init() {
 #endif
     }
 
-    stream_ = {device_->setupStream(SOAPY_SDR_RX, soapy_format, channels, stream_settings), std::bind(&SoapySDR::Device::closeStream, device_, std::placeholders::_1)};
+    try {
+        stream_ = {device_->setupStream(SOAPY_SDR_RX, soapy_format, channels, stream_settings), std::bind(&SoapySDR::Device::closeStream, device_, std::placeholders::_1)};
+    } catch (const std::runtime_error &err) {
+        throw config_error(std::string("Failed to construct soapysdr stream (cause: ") + err.what() + ")");
+    }
+
     if (!stream_) {
-        throw std::runtime_error("failed to construct stream");
+        throw config_error("Failed to construct soapysdr stream");
     }
 }
 

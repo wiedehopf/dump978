@@ -14,6 +14,7 @@
 
 #include "convert.h"
 #include "demodulator.h"
+#include "exception.h"
 #include "message_dispatch.h"
 #include "sample_source.h"
 #include "soapy_source.h"
@@ -246,14 +247,15 @@ static int realmain(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-#ifndef DEBUG_EXCEPTIONS
     try {
         return realmain(argc, argv);
+    } catch (const config_error &e) {
+        std::cerr << "Configuration error: " << e.what() << std::endl;
+        return 2;
+#ifndef DEBUG_EXCEPTIONS
     } catch (...) {
         std::cerr << "Uncaught exception: " << boost::current_exception_diagnostic_information() << std::endl;
         return 2;
-    }
-#else
-    return realmain(argc, argv);
 #endif
+    }
 }
