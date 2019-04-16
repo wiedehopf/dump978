@@ -31,6 +31,11 @@ static void SoapyLogger(const SoapySDRLogLevel logLevel, const char *message) {
     };
     // clang-format on
 
+    if (logLevel == SOAPY_SDR_SSI) {
+        // we don't care about this, and it's not masked by log level
+        return;
+    }
+
     std::string level;
     auto i = levels.find(logLevel);
     if (i == levels.end())
