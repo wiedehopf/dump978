@@ -258,7 +258,7 @@ void SoapySampleSource::Run() {
 
         block.resize(elements * bytes_per_element);
         auto elements_read = device_->readStream(stream_.get(), buffs, elements, flags, time_ns,
-                                                 /* timeout, microseconds */ 1000000);
+                                                 /* timeout, microseconds */ 5000000);
         if (halt_) {
             break;
         }
