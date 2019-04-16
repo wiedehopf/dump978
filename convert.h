@@ -102,9 +102,14 @@ namespace flightaware::uat {
 
     class CS16HConverter : public SampleConverter {
       public:
-        CS16HConverter() : SampleConverter(SampleFormat::CS16H) {}
+        CS16HConverter();
         void ConvertPhase(Bytes::const_iterator begin, Bytes::const_iterator end, PhaseBuffer::iterator out) override;
         void ConvertMagSq(Bytes::const_iterator begin, Bytes::const_iterator end, std::vector<double>::iterator out) override;
+
+      private:
+        std::uint16_t TableAtan(std::uint32_t r);
+        std::uint16_t TableAtan2(std::int16_t y, std::int16_t x);
+        std::array<std::uint16_t, 65536> lookup_atan_;
     };
 
     class CF32HConverter : public SampleConverter {
