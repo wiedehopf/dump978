@@ -88,6 +88,7 @@ static SoapySDRCategory soapysdr_category;
 SoapySampleSource::SoapySampleSource(boost::asio::io_service &service, const std::string &device_name, const boost::program_options::variables_map &options) : timer_(service), device_name_(device_name), options_(options) {
     if (!log_handler_registered_.exchange(true)) {
         SoapySDR::registerLogHandler(SoapyLogger);
+        SoapySDR::setLogLevel(SOAPY_SDR_NOTICE);
     }
 }
 
