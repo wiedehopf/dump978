@@ -256,6 +256,10 @@ void SoapySampleSource::Run() {
     Bytes block;
     block.reserve(elements * bytes_per_element);
 
+    const auto overflow_report_interval = std::chrono::milliseconds(15000);
+    auto last_overflow_report = std::chrono::steady_clock::now();
+    unsigned overflow_count = 0;
+
     while (!halt_) {
         void *buffs[1] = {block.data()};
         int flags = 0;
@@ -269,8 +273,26 @@ void SoapySampleSource::Run() {
         }
 
         if (elements_read < 0) {
-            DispatchError(boost::system::error_code{elements_read, soapysdr_category});
-            break;
+            if (elements_read == SOAPY_SDR_OVERFLOW) {
+                std::cerr << "SoapySDR: overflow" << std::endl;
+                ++overflow_count;
+            } else {
+                DispatchError(boost::system::error_code{elements_read, soapysdr_category});
+                break;
+            }
+        }
+
+        if (overflow_count > 0) {
+            auto now = std::chrono::steady_clock::now();
+            if (now - last_overflow_report > overflow_report_interval) {
+                std::cerr << "SoapySDR: " << overflow_count << " recent input overruns (sample data dropped)" << std::endl;
+                last_overflow_report = now;
+                overflow_count = 0;
+            }
+        }
+
+        if (elements_read <= 0) {
+            continue;
         }
 
         block.resize(elements_read * bytes_per_element);
