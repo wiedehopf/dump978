@@ -10,7 +10,11 @@
 using namespace flightaware::uat;
 
 static inline std::uint16_t scaled_atan2(double y, double x) {
-    double ang = std::atan2(y, x) + M_PI; // atan2 returns [-pi..pi], normalize to [0..2*pi]
+    double ang = std::atan2(y, x);
+    if (ang < 0) {
+        // atan2 returns [-pi..pi], normalize to [0..2*pi]
+        ang += 2 * M_PI;
+    }
     double scaled_ang = std::round(32768 * ang / M_PI);
     return scaled_ang < 0 ? 0 : scaled_ang > 65535 ? 65535 : (std::uint16_t)scaled_ang;
 }
