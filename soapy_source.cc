@@ -242,9 +242,12 @@ void SoapySampleSource::Init() {
 
     if (options_.count("sdr-stream-settings")) {
         for (auto kv : KwargsFromString(options_["sdr-stream-settings"].as<std::string>())) {
-            std::cerr << "SoapySDR: using stream setting " << kv.first << "=" << kv.second << std::endl;
             stream_settings[kv.first] = kv.second;
         }
+    }
+
+    for (auto &kv : stream_settings) {
+        std::cerr << "SoapySDR: using stream setting " << kv.first << "=" << kv.second << std::endl;
     }
 
     try {
