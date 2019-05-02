@@ -184,6 +184,8 @@ void AdsbMessage::DecodeSV(const RawMessage &raw) {
             case VerticalVelocitySource::GEOMETRIC:
                 vertical_velocity_geometric = vertical_velocity;
                 break;
+            default:
+                break;
             }
         }
 
@@ -303,6 +305,8 @@ void AdsbMessage::DecodeTS(const RawMessage &raw, unsigned startbyte) {
         case SelectedAltitudeType::FMS:
             selected_altitude_fms = (raw_altitude - 1) * 32;
             break;
+        default:
+            break;
         }
     }
 
@@ -404,17 +408,60 @@ void AdsbMessage::DecodeAUXSV(const RawMessage &raw) {
 // converting decoded messages to json
 //
 
-NLOHMANN_JSON_SERIALIZE_ENUM(AddressQualifier, {{AddressQualifier::ADSB_ICAO, "adsb_icao"}, {AddressQualifier::ADSB_OTHER, "adsb_other"}, {AddressQualifier::TISB_ICAO, "tisb_icao"}, {AddressQualifier::TISB_TRACKFILE, "tisb_trackfile"}, {AddressQualifier::VEHICLE, "vehicle"}, {AddressQualifier::ADSB_ICAO, "fixed_beacon"}, {AddressQualifier::ADSB_ICAO, "adsr_other"}, {AddressQualifier::RESERVED_7, "reserved_7"}});
+namespace flightaware::uat {
+    // clang-format off
 
-NLOHMANN_JSON_SERIALIZE_ENUM(AirGroundState, {{AirGroundState::AIRBORNE_SUBSONIC, "airborne"}, {AirGroundState::AIRBORNE_SUPERSONIC, "supersonic"}, {AirGroundState::ON_GROUND, "ground"}, {AirGroundState::RESERVED, "reserved"}});
+    NLOHMANN_JSON_SERIALIZE_ENUM(AddressQualifier, {
+        {AddressQualifier::INVALID, "invalid"},
+        {AddressQualifier::ADSB_ICAO, "adsb_icao"},
+        {AddressQualifier::ADSB_OTHER, "adsb_other"},
+        {AddressQualifier::TISB_ICAO, "tisb_icao"},
+        {AddressQualifier::TISB_TRACKFILE, "tisb_trackfile"},
+        {AddressQualifier::VEHICLE, "vehicle"},
+        {AddressQualifier::FIXED_BEACON, "fixed_beacon"},
+        {AddressQualifier::ADSR_OTHER, "adsr_other"},
+        {AddressQualifier::RESERVED, "reserved"},
+    });
 
-NLOHMANN_JSON_SERIALIZE_ENUM(VerticalVelocitySource, {{VerticalVelocitySource::GEOMETRIC, "geometric"}, {VerticalVelocitySource::BAROMETRIC, "barometric"}});
+    NLOHMANN_JSON_SERIALIZE_ENUM(AirGroundState, {
+        {AirGroundState::INVALID, "invalid"},
+        {AirGroundState::AIRBORNE_SUBSONIC, "airborne"},
+        {AirGroundState::AIRBORNE_SUPERSONIC, "supersonic"},
+        {AirGroundState::ON_GROUND, "ground"},
+        {AirGroundState::RESERVED, "reserved"}
+    });
 
-NLOHMANN_JSON_SERIALIZE_ENUM(EmergencyPriorityStatus, {{EmergencyPriorityStatus::NONE, "none"}, {EmergencyPriorityStatus::GENERAL, "general"}, {EmergencyPriorityStatus::MEDICAL, "medical"}, {EmergencyPriorityStatus::NORDO, "nordo"}, {EmergencyPriorityStatus::UNLAWFUL, "unlawful"}, {EmergencyPriorityStatus::DOWNED, "downed"}, {EmergencyPriorityStatus::RESERVED_7, "reserved_7"}});
+    NLOHMANN_JSON_SERIALIZE_ENUM(VerticalVelocitySource, {
+        {VerticalVelocitySource::INVALID, "invalid"},
+        {VerticalVelocitySource::GEOMETRIC, "geometric"},
+        {VerticalVelocitySource::BAROMETRIC, "barometric"}
+    });
 
-NLOHMANN_JSON_SERIALIZE_ENUM(SILSupplement, {{SILSupplement::PER_HOUR, "per_hour"}, {SILSupplement::PER_SAMPLE, "per_sample"}});
+    NLOHMANN_JSON_SERIALIZE_ENUM(EmergencyPriorityStatus, {
+        {EmergencyPriorityStatus::INVALID, "invalid"},
+        {EmergencyPriorityStatus::NONE, "none"},
+        {EmergencyPriorityStatus::GENERAL, "general"},
+        {EmergencyPriorityStatus::MEDICAL, "medical"},
+        {EmergencyPriorityStatus::NORDO, "nordo"},
+        {EmergencyPriorityStatus::UNLAWFUL, "unlawful"},
+        {EmergencyPriorityStatus::DOWNED, "downed"},
+        {EmergencyPriorityStatus::RESERVED, "reserved"}
+    });
 
-NLOHMANN_JSON_SERIALIZE_ENUM(SelectedAltitudeType, {{SelectedAltitudeType::MCP_FCU, "mcp_fcu"}, {SelectedAltitudeType::FMS, "fms"}});
+    NLOHMANN_JSON_SERIALIZE_ENUM(SILSupplement, {
+        {SILSupplement::INVALID, "invalid"},
+        {SILSupplement::PER_HOUR, "per_hour"},
+        {SILSupplement::PER_SAMPLE, "per_sample"}
+    });
+
+    NLOHMANN_JSON_SERIALIZE_ENUM(SelectedAltitudeType, {
+        {SelectedAltitudeType::INVALID, "invalid"},
+        {SelectedAltitudeType::MCP_FCU, "mcp_fcu"},
+        {SelectedAltitudeType::FMS, "fms"}
+    });
+
+    // clang-format on
+}; // namespace flightaware::uat
 
 nlohmann::json AdsbMessage::ToJson() const {
     nlohmann::json o;
@@ -459,7 +506,10 @@ nlohmann::json AdsbMessage::ToJson() const {
     EMIT(uplink_feedback);
     EMIT(tisb_site_id);
 
-    EMIT(emitter_category);
+    if (emitter_category) {
+        o["emitter_category"] = std::string{(char)('A' + (*emitter_category >> 3)), (char)('0' + (*emitter_category & 7))};
+    }
+
     EMIT(callsign);
     EMIT(flightplan_id);
     EMIT(emergency);
