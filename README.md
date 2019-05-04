@@ -21,12 +21,12 @@ for use by the Skyview web map.
 ```
 $ sudo apt-get install \
   build-essential \
-  debhelper, \
-  dh-systemd, \
-  libboost-system-dev, \
-  libboost-program-options-dev, \
-  libboost-regex-dev, \
-  libboost-filesystem-dev, \
+  debhelper \
+  dh-systemd \
+  libboost-system-dev \
+  libboost-program-options-dev \
+  libboost-regex-dev \
+  libboost-filesystem-dev \
   libsoapysdr-dev
 
 $ dpkg-buildpackage -b
