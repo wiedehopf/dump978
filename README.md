@@ -53,10 +53,10 @@ For a package install, see `/etc/default/dump978-fa` and
 
 The main options are:
 
- * `--sdr-device` specifies the SDR to use, in the format expected by
-   SoapySDR. For a rtlsdr, try `--sdr-device driver=rtlsdr`. To select a
+ * `--sdr` specifies the SDR to use, in the format expected by
+   SoapySDR. For a rtlsdr, try `--sdr driver=rtlsdr`. To select a
    particular rtlsdr dongle by serial number, try
-   `--sdr-device driver=rtlsdr,serial=01234567`
+   `--sdr driver=rtlsdr,serial=01234567`
  * `--sdr-gain` sets the SDR gain (default: max)
  * `--raw-port` listens on the given TCP port and provides raw messages
  * `--json-port` listens on the given TCP port and provides decoded messages
