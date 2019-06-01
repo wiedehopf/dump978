@@ -330,7 +330,6 @@ void SoapySampleSource::Run() {
 
         if (elements_read < 0) {
             if (elements_read == SOAPY_SDR_OVERFLOW) {
-                std::cerr << "SoapySDR: overflow" << std::endl;
                 ++overflow_count;
             } else {
                 DispatchError(boost::system::error_code{elements_read, soapysdr_category});
