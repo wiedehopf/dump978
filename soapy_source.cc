@@ -152,7 +152,8 @@ SoapySampleSource::~SoapySampleSource() { Stop(); }
 
 void SoapySampleSource::Init() {
     try {
-        device_ = {SoapySDR::Device::make(device_name_), &SoapySDR::Device::unmake};
+        void (*unmake)(SoapySDR::Device *) = &SoapySDR::Device::unmake; // select the right overload
+        device_ = {SoapySDR::Device::make(device_name_), unmake};
     } catch (const std::runtime_error &err) {
         throw config_error(std::string("No matching SoapySDR device found (cause: ") + err.what() + ")");
     }
