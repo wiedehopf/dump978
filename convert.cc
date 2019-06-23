@@ -35,7 +35,7 @@ SampleConverter::Pointer SampleConverter::Create(SampleFormat format) {
     switch (format) {
     case SampleFormat::CU8:
         return Pointer(new CU8Converter());
-    case SampleFormat::CS8:
+    case SampleFormat::CS8_:
         return Pointer(new CS8Converter());
     case SampleFormat::CS16H:
         return Pointer(new CS16HConverter());
@@ -109,7 +109,7 @@ void CU8Converter::ConvertMagSq(Bytes::const_iterator begin, Bytes::const_iterat
     }
 }
 
-CS8Converter::CS8Converter() : SampleConverter(SampleFormat::CS8) {
+CS8Converter::CS8Converter() : SampleConverter(SampleFormat::CS8_) {
     cs8_alias u;
 
     int i, q;

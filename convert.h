@@ -13,18 +13,18 @@
 
 namespace flightaware::uat {
     // Describes a sample data layout:
-    //   CU8  - interleaved I/Q data, 8 bit unsigned integers
-    //   CS8  - interleaved I/Q data, 8 bit signed integers
+    //   CU8   - interleaved I/Q data, 8 bit unsigned integers
+    //   CS8_  - interleaved I/Q data, 8 bit signed integers
     //   CS16H - interleaved I/Q data, 16 bit signed integers, host byte order
     //   CF32H - interleaved I/Q data, 32 bit signed floats, host byte order
-    enum class SampleFormat { CU8, CS8, CS16H, CF32H, UNKNOWN };
+    enum class SampleFormat { CU8, CS8_, CS16H, CF32H, UNKNOWN };
 
     // Return the number of bytes for 1 sample in the given format
     inline static unsigned BytesPerSample(SampleFormat f) {
         switch (f) {
         case SampleFormat::CU8:
             return 2;
-        case SampleFormat::CS8:
+        case SampleFormat::CS8_:
             return 2;
         case SampleFormat::CS16H:
             return 4;

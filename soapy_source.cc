@@ -51,7 +51,7 @@ static std::string FormatToSoapy(SampleFormat format) {
     // clang-format off
     static const std::map<SampleFormat,std::string> lookup = {
         { SampleFormat::CU8, SOAPY_SDR_CU8 },
-        { SampleFormat::CS8, SOAPY_SDR_CS8 },
+        { SampleFormat::CS8_, SOAPY_SDR_CS8 },
         { SampleFormat::CS16H, SOAPY_SDR_CS16 },
         { SampleFormat::CF32H, SOAPY_SDR_CF32 }
     };
@@ -69,7 +69,7 @@ static SampleFormat SoapyToFormat(std::string format) {
     // clang-format off
     static const std::map<std::string,SampleFormat> lookup = {
         { SOAPY_SDR_CU8, SampleFormat::CU8 },
-        { SOAPY_SDR_CS8, SampleFormat::CS8  },
+        { SOAPY_SDR_CS8, SampleFormat::CS8_ },
         { SOAPY_SDR_CS16, SampleFormat::CS16H },
         { SOAPY_SDR_CF32, SampleFormat::CF32H }
     };

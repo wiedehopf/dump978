@@ -58,7 +58,7 @@ namespace flightaware::uat {
         // clang-format off
         static std::map<std::string, SampleFormat> formats = {
             {"CU8", SampleFormat::CU8},
-            {"CS8", SampleFormat::CS8},
+            {"CS8", SampleFormat::CS8_},
             {"CS16H", SampleFormat::CS16H},
             {"CF32H", SampleFormat::CF32H}
         };
