@@ -1,3 +1,9 @@
+dump978-fa (3.7.2~dev) UNRELEASED; urgency=medium
+
+  * in development
+
+ -- Oliver Jowett <oliver@mutability.co.uk>  Sat, 22 Jun 2019 20:21:21 -0500
+
 dump978-fa (3.7.1) stable; urgency=medium
 
   * dump978: Fix getting LAT/LON from piaware .env file
