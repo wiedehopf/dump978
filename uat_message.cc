@@ -47,6 +47,9 @@ std::ostream &flightaware::uat::operator<<(std::ostream &os, const RawMessage &m
     if (message.ReceivedAt() != 0) {
         os << "t=" << std::dec << std::setw(0) << (message.ReceivedAt() / 1000) << '.' << std::setfill('0') << std::setw(3) << (message.ReceivedAt() % 1000) << ';';
     }
+    if (message.RawTimestamp() != 0) {
+        os << "rt=" << std::dec << std::setw(0) << message.RawTimestamp() << ';';
+    }
     return os;
 }
 
@@ -61,6 +64,7 @@ AdsbMessage::AdsbMessage(const RawMessage &raw) {
 
     // Metadata
     received_at = raw.ReceivedAt();
+    raw_timestamp = raw.RawTimestamp();
     errors = raw.Errors();
     rssi = raw.Rssi();
 
@@ -561,11 +565,17 @@ nlohmann::json AdsbMessage::ToJson() const {
 
     // clang-format off
     o["metadata"] = {
-        { "received_at", received_at / 1000.0 },
         { "rssi", RoundN(rssi, 1) },
         { "errors", errors }
     };
     // clang-format on
+
+    if (received_at != 0) {
+        o["metadata"]["received_at"] = received_at / 1000.0;
+    }
+    if (raw_timestamp != 0) {
+        o["metadata"]["raw_timestamp"] = raw_timestamp;
+    }
 
     return o;
 }

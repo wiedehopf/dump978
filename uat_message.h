@@ -22,7 +22,7 @@ namespace flightaware::uat {
       public:
         RawMessage() : type_(MessageType::INVALID), received_at_(0), errors_(0), rssi_(0) {}
 
-        RawMessage(const Bytes &payload, std::uint64_t received_at, unsigned errors, float rssi) : payload_(payload), received_at_(received_at), errors_(errors), rssi_(rssi) {
+        RawMessage(const Bytes &payload, std::uint64_t received_at, unsigned errors, float rssi, std::uint64_t raw_timestamp = 0) : payload_(payload), received_at_(received_at), errors_(errors), rssi_(rssi), raw_timestamp_(raw_timestamp) {
             switch (payload_.size()) {
             case DOWNLINK_SHORT_DATA_BYTES:
                 type_ = MessageType::DOWNLINK_SHORT;
@@ -39,7 +39,7 @@ namespace flightaware::uat {
             }
         }
 
-        RawMessage(Bytes &&payload, std::uint64_t received_at, unsigned errors, float rssi) : payload_(std::move(payload)), received_at_(received_at), errors_(errors), rssi_(rssi) {
+        RawMessage(Bytes &&payload, std::uint64_t received_at, unsigned errors, float rssi, std::uint64_t raw_timestamp = 0) : payload_(std::move(payload)), received_at_(received_at), errors_(errors), rssi_(rssi), raw_timestamp_(raw_timestamp) {
             switch (payload_.size()) {
             case DOWNLINK_SHORT_DATA_BYTES:
                 type_ = MessageType::DOWNLINK_SHORT;
@@ -67,6 +67,8 @@ namespace flightaware::uat {
         unsigned Errors() const { return errors_; }
 
         float Rssi() const { return rssi_; }
+
+        std::uint64_t RawTimestamp() const { return raw_timestamp_; }
 
         // Number of raw bits in the message, excluding the sync bits
         unsigned BitLength() const {
@@ -146,6 +148,7 @@ namespace flightaware::uat {
         std::uint64_t received_at_;
         unsigned errors_;
         float rssi_;
+        std::uint64_t raw_timestamp_;
     };
 
     std::ostream &operator<<(std::ostream &os, const RawMessage &message);
@@ -213,6 +216,7 @@ namespace flightaware::uat {
 
         // Metadata copied from the raw message
         std::uint64_t received_at;
+        std::uint64_t raw_timestamp;
         unsigned errors;
         float rssi;
 
