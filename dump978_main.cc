@@ -122,7 +122,8 @@ static int realmain(int argc, char **argv) {
     }
 
     MessageDispatch dispatch;
-    SampleSource::Pointer source;
+    SampleSource::Pointer sample_source;
+    MessageSource::Pointer message_source;
 
     tcp::resolver resolver(io_service);
 
@@ -132,13 +133,13 @@ static int realmain(int argc, char **argv) {
     }
 
     if (opts.count("stdin")) {
-        source = StdinSampleSource::Create(io_service, opts);
+        sample_source = StdinSampleSource::Create(io_service, opts);
     } else if (opts.count("file")) {
         boost::filesystem::path path(opts["file"].as<std::string>());
-        source = FileSampleSource::Create(io_service, path, opts);
+        sample_source = FileSampleSource::Create(io_service, path, opts);
     } else if (opts.count("sdr")) {
         auto device = opts["sdr"].as<std::string>();
-        source = SoapySampleSource::Create(io_service, device, opts);
+        sample_source = SoapySampleSource::Create(io_service, device, opts);
     } else {
         assert("impossible case" && false);
     }
@@ -202,26 +203,30 @@ static int realmain(int argc, char **argv) {
         });
     }
 
-    source->Init();
-    auto format = source->Format();
-
-    auto receiver = std::make_shared<SingleThreadReceiver>(format);
-    receiver->SetConsumer(std::bind(&MessageDispatch::Dispatch, &dispatch, std::placeholders::_1));
-
     bool saw_error = false;
 
-    source->SetConsumer([&io_service, &saw_error, receiver](std::uint64_t timestamp, const Bytes &buffer, const boost::system::error_code &ec) {
-        if (ec) {
-            if (ec == boost::asio::error::eof) {
-                std::cerr << "Sample source reports EOF" << std::endl;
-            } else {
-                std::cerr << "Sample source reports error: " << ec.message() << std::endl;
-                saw_error = true;
-            }
-            io_service.stop();
+    if (sample_source) {
+        sample_source->Init();
+        auto format = sample_source->Format();
+
+        auto receiver = std::make_shared<SingleThreadReceiver>(format);
+
+        sample_source->SetConsumer([receiver](std::uint64_t timestamp, const Bytes &buffer) { receiver->HandleSamples(timestamp, buffer.begin(), buffer.end()); });
+
+        sample_source->SetErrorHandler(std::bind(&SingleThreadReceiver::HandleError, receiver, std::placeholders::_1));
+
+        message_source = std::static_pointer_cast<MessageSource>(receiver);
+    }
+
+    message_source->SetConsumer(std::bind(&MessageDispatch::Dispatch, &dispatch, std::placeholders::_1));
+    message_source->SetErrorHandler([&io_service, &saw_error](const boost::system::error_code &ec) {
+        if (ec == boost::asio::error::eof) {
+            std::cerr << "Message source reports EOF" << std::endl;
         } else {
-            receiver->HandleSamples(timestamp, buffer.begin(), buffer.end());
+            std::cerr << "Message source reports error: " << ec.message() << std::endl;
+            saw_error = true;
         }
+        io_service.stop();
     });
 
     boost::asio::signal_set signals(io_service, SIGINT, SIGTERM);
@@ -231,11 +236,17 @@ static int realmain(int argc, char **argv) {
         io_service.stop();
     });
 
-    source->Start();
+    message_source->Start();
+    if (sample_source) {
+        sample_source->Start();
+    }
 
     io_service.run();
 
-    source->Stop();
+    if (sample_source) {
+        sample_source->Stop();
+    }
+    message_source->Stop();
 
     if (saw_error) {
         std::cerr << "Abnormal exit" << std::endl;

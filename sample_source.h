@@ -25,7 +25,8 @@ namespace flightaware::uat {
     class SampleSource : public std::enable_shared_from_this<SampleSource> {
       public:
         typedef std::shared_ptr<SampleSource> Pointer;
-        typedef std::function<void(std::uint64_t, const Bytes &, const boost::system::error_code &ec)> Consumer;
+        typedef std::function<void(std::uint64_t, const Bytes &)> Consumer;
+        typedef std::function<void(const boost::system::error_code &ec)> ErrorHandler;
 
         virtual ~SampleSource() {}
 
@@ -35,24 +36,26 @@ namespace flightaware::uat {
         virtual SampleFormat Format() = 0;
 
         void SetConsumer(Consumer consumer) { consumer_ = consumer; }
+        void SetErrorHandler(ErrorHandler handler) { error_handler_ = handler; }
 
       protected:
         SampleSource() {}
 
         void DispatchBuffer(std::uint64_t timestamp, const Bytes &buffer) {
             if (consumer_) {
-                consumer_(timestamp, buffer, boost::system::error_code());
+                consumer_(timestamp, buffer);
             }
         }
 
         void DispatchError(const boost::system::error_code &ec) {
-            if (consumer_) {
-                consumer_(0, Bytes(), ec);
+            if (error_handler_) {
+                error_handler_(ec);
             }
         }
 
       private:
         Consumer consumer_;
+        ErrorHandler error_handler_;
     };
 
     class FileSampleSource : public SampleSource {
