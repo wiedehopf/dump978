@@ -138,7 +138,9 @@ void StratuxSerial::ParseInput(const Bytes &buf) {
             i += bytes_to_copy;
 
             if (message_.size() == message_length_) {
-                auto parsed = ParseMessage(message_, message_start_timestamp_);
+                auto previous_sys_timestamp = (messages ? messages->front().ReceivedAt() : message_start_timestamp_);
+                auto previous_raw_timestamp = (messages ? messages->front().RawTimestamp() : 0);
+                auto parsed = ParseMessage(message_, previous_sys_timestamp, previous_raw_timestamp);
                 if (parsed) {
                     if (!messages) {
                         messages = std::make_shared<MessageVector>();
@@ -162,7 +164,7 @@ void StratuxSerial::ParseInput(const Bytes &buf) {
     }
 }
 
-boost::optional<RawMessage> StratuxSerial::ParseMessage(const Bytes &message, std::uint64_t sys_timestamp) {
+boost::optional<RawMessage> StratuxSerial::ParseMessage(const Bytes &message, std::uint64_t previous_sys_timestamp, std::uint32_t previous_raw_timestamp) {
     assert(message.size() >= 5);
 
     // not entirely clear what the RSSI format is; here we assume it's
@@ -170,7 +172,16 @@ boost::optional<RawMessage> StratuxSerial::ParseMessage(const Bytes &message, st
     std::int8_t raw_rssi = message[0];
     float rssi = 1.0 * raw_rssi;
 
-    std::uint32_t timestamp = message[1] | (message[2] << 8) | (message[3] << 16) | (message[4] << 24);
+    std::uint32_t raw_timestamp = message[1] | (message[2] << 8) | (message[3] << 16) | (message[4] << 24);
+
+    // If this is the first message seen in a read, use the system timestamp directly.
+    // Otherwise, use the reported timestamp relative to the first message
+    std::uint64_t sys_timestamp;
+    if (previous_raw_timestamp == 0 || raw_timestamp < previous_raw_timestamp) {
+        sys_timestamp = previous_sys_timestamp;
+    } else {
+        sys_timestamp = previous_sys_timestamp + (raw_timestamp - previous_raw_timestamp) / 4000;
+    }
 
     Bytes payload;
     std::copy(message.begin() + 5, message.end(), std::back_inserter(payload));
@@ -198,7 +209,7 @@ boost::optional<RawMessage> StratuxSerial::ParseMessage(const Bytes &message, st
         return boost::none;
     }
 
-    return RawMessage{std::move(corrected), sys_timestamp, errors, rssi, timestamp};
+    return RawMessage{std::move(corrected), sys_timestamp, errors, rssi, raw_timestamp};
 }
 
 void StratuxSerial::HandleError(const boost::system::error_code &ec) { DispatchError(ec); }

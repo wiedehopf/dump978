@@ -40,7 +40,7 @@ namespace flightaware::uat {
       private:
         void StartReading();
         void ParseInput(const Bytes &buf);
-        boost::optional<RawMessage> ParseMessage(const Bytes &message, std::uint64_t sys_timestamp);
+        boost::optional<RawMessage> ParseMessage(const Bytes &message, std::uint64_t previous_sys_timestamp, std::uint32_t previous_raw_timestamp);
         void HandleError(const boost::system::error_code &ec);
 
         // the size of the read buffer
