@@ -19,6 +19,7 @@
 #include "sample_source.h"
 #include "soapy_source.h"
 #include "socket_output.h"
+#include "stratux_serial.h"
 
 using namespace flightaware::uat;
 
@@ -95,6 +96,7 @@ static int realmain(int argc, char **argv) {
         ("sdr-antenna", po::value<std::string>(), "set SDR antenna name")
         ("sdr-stream-settings", po::value<std::string>(), "set SDR stream key-value settings")
         ("sdr-device-settings", po::value<std::string>(), "set SDR device key-value settings")
+        ("stratuxv3", po::value<std::string>(), "read messages from Stratux v3 UAT dongle on given serial port")
         ("raw-port", po::value<std::vector<listen_option>>(), "listen for connections on [host:]port and provide raw messages")
         ("json-port", po::value<std::vector<listen_option>>(), "listen for connections on [host:]port and provide decoded json");
     // clang-format on
@@ -127,8 +129,8 @@ static int realmain(int argc, char **argv) {
 
     tcp::resolver resolver(io_service);
 
-    if (opts.count("stdin") + opts.count("file") + opts.count("sdr") != 1) {
-        std::cerr << "Exactly one of --stdin, --file, or --sdr must be used" << std::endl;
+    if (opts.count("stdin") + opts.count("file") + opts.count("sdr") + opts.count("stratuxv3") != 1) {
+        std::cerr << "Exactly one of --stdin, --file, --sdr, or --stratuxv3 must be used" << std::endl;
         return EXIT_NO_RESTART;
     }
 
@@ -140,6 +142,9 @@ static int realmain(int argc, char **argv) {
     } else if (opts.count("sdr")) {
         auto device = opts["sdr"].as<std::string>();
         sample_source = SoapySampleSource::Create(io_service, device, opts);
+    } else if (opts.count("stratuxv3")) {
+        auto path = opts["stratuxv3"].as<std::string>();
+        message_source = StratuxSerial::Create(io_service, path);
     } else {
         assert("impossible case" && false);
     }
