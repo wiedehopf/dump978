@@ -1,3 +1,27 @@
+dump978-fa (3.7.2~dev) UNRELEASED; urgency=medium
+
+  * in development
+
+ -- Oliver Jowett <oliver@mutability.co.uk>  Sat, 22 Jun 2019 20:21:21 -0500
+
+dump978-fa (3.7.1) stable; urgency=medium
+
+  * dump978: Fix getting LAT/LON from piaware .env file
+  * dump978: Fix atan2 angle normalization
+  * dump978: Switch CS16 converter to a table-based approach
+  * soapysdr: soapysdr logging and error handling enhancements
+  * soapysdr: Increase soapysdr timeout to 5s due to timeouts
+  * soapysdr: Treat soapysdr stream overflows as non-fatal
+  * soapysdr: Fix --sdr-device-settings handling
+  * soapysdr: Support --sdr-{device,stream} settings
+  * skyview978: Update aircraft DB to 20190502
+  * skyview978: Fix enums in json-format output; emit emitter_category
+    as a string
+  * skyview978: Fix Skyview error text still referring to dump1090
+  * skyview978: Reduce range ring distances
+
+ -- Eric Tran <eric.tran@flightaware.com>  Mon, 06 May 2019 10:04:00 -6000
+
 dump978-fa (3.7.0.1) stable; urgency=medium
 
   * dump978: Fix quotations bug in default config file

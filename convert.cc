@@ -10,7 +10,21 @@
 using namespace flightaware::uat;
 
 static inline std::uint16_t scaled_atan2(double y, double x) {
-    double ang = std::atan2(y, x) + M_PI; // atan2 returns [-pi..pi], normalize to [0..2*pi]
+    double ang = std::atan2(y, x);
+    if (ang < 0) {
+        // atan2 returns [-pi..pi], normalize to [0..2*pi]
+        ang += 2 * M_PI;
+    }
+    double scaled_ang = std::round(32768 * ang / M_PI);
+    return scaled_ang < 0 ? 0 : scaled_ang > 65535 ? 65535 : (std::uint16_t)scaled_ang;
+}
+
+static inline std::uint16_t scaled_atan(double x) {
+    double ang = std::atan(x);
+    if (ang < 0) {
+        // atan returns [-pi/2..pi/2], normalize to [0..2*pi]
+        ang += 2 * M_PI;
+    }
     double scaled_ang = std::round(32768 * ang / M_PI);
     return scaled_ang < 0 ? 0 : scaled_ang > 65535 ? 65535 : (std::uint16_t)scaled_ang;
 }
@@ -21,7 +35,7 @@ SampleConverter::Pointer SampleConverter::Create(SampleFormat format) {
     switch (format) {
     case SampleFormat::CU8:
         return Pointer(new CU8Converter());
-    case SampleFormat::CS8:
+    case SampleFormat::CS8_:
         return Pointer(new CS8Converter());
     case SampleFormat::CS16H:
         return Pointer(new CS16HConverter());
@@ -95,7 +109,7 @@ void CU8Converter::ConvertMagSq(Bytes::const_iterator begin, Bytes::const_iterat
     }
 }
 
-CS8Converter::CS8Converter() : SampleConverter(SampleFormat::CS8) {
+CS8Converter::CS8Converter() : SampleConverter(SampleFormat::CS8_) {
     cs8_alias u;
 
     int i, q;
@@ -157,6 +171,66 @@ void CS8Converter::ConvertMagSq(Bytes::const_iterator begin, Bytes::const_iterat
     }
 }
 
+static inline std::int16_t PhaseDifference(std::uint16_t from, std::uint16_t to) {
+    int32_t difference = to - from; // lies in the range -65535 .. +65535
+    if (difference >= 32768)        //   +32768..+65535
+        return difference - 65536;  //   -> -32768..-1: always in range
+    else if (difference < -32768)   //   -65535..-32769
+        return difference + 65536;  //   -> +1..32767: always in range
+    else
+        return difference;
+}
+CS16HConverter::CS16HConverter() : SampleConverter(SampleFormat::CS16H) {
+    // atan lookup, positive values only, 8-bit fixed point covering 0.0 .. 256.0
+    for (std::size_t i = 0; i < lookup_atan_.size(); ++i) {
+        lookup_atan_[i] = scaled_atan(i / 256.0);
+    }
+}
+
+// caution, expects unsigned (positive) input only
+inline std::uint16_t CS16HConverter::TableAtan(std::uint32_t r) {
+    if (r > lookup_atan_.size())
+        return 16384; // pi/2
+    else
+        return lookup_atan_[r];
+}
+
+inline std::uint16_t CS16HConverter::TableAtan2(std::int16_t y, std::int16_t x) {
+    // atan2 using the atan lookup table
+    // we rely on unsigned 16-bit integer overflow/wrap semantics
+    // max error is about 0.2 degrees
+    if (x == 0) {
+        if (y >= 0) {
+            return 16384; // pi/2
+        } else {
+            return 49152; // 3/2 pi
+        }
+    }
+
+    const std::int32_t r = (std::int32_t)(256 * y) / x;
+    if (x < 0) {
+        if (y < 0) {
+            // x < 0, y < 0   => y/x > 0
+            // atan2(y,x) = pi + atan(y/x)
+            return (std::uint16_t)32768 + TableAtan((std::uint32_t)r);
+        } else {
+            // x < 0, y >= 0  => y/x <= 0
+            // atan2(y,x) = -pi + atan(y/x) = -pi - atan(-y/x)
+            return (std::uint16_t)32768 - TableAtan((std::uint32_t)-r);
+        }
+    } else {
+        if (y < 0) {
+            // x > 0, y < 0   => y/x < 0
+            // atan2(y,x) = atan(y/x) = -atan(-y/x)
+            return (std::uint16_t)0 - TableAtan((std::uint32_t)-r);
+        } else {
+            // x > 0, y >= 0  => y/x >= 0
+            // atan2(y,x) = atan(y/x)
+            return TableAtan((std::uint32_t)r);
+        }
+    }
+}
+
 void CS16HConverter::ConvertPhase(Bytes::const_iterator begin, Bytes::const_iterator end, PhaseBuffer::iterator out) {
     auto in_iq = reinterpret_cast<const std::int16_t *>(&*begin);
 
@@ -166,17 +240,17 @@ void CS16HConverter::ConvertPhase(Bytes::const_iterator begin, Bytes::const_iter
     const auto n7 = n & 7;
 
     for (auto i = 0; i < n8; ++i, in_iq += 16) {
-        *out++ = scaled_atan2(in_iq[1], in_iq[0]);
-        *out++ = scaled_atan2(in_iq[3], in_iq[2]);
-        *out++ = scaled_atan2(in_iq[5], in_iq[4]);
-        *out++ = scaled_atan2(in_iq[7], in_iq[6]);
-        *out++ = scaled_atan2(in_iq[9], in_iq[8]);
-        *out++ = scaled_atan2(in_iq[11], in_iq[10]);
-        *out++ = scaled_atan2(in_iq[13], in_iq[12]);
-        *out++ = scaled_atan2(in_iq[15], in_iq[14]);
+        *out++ = TableAtan2(in_iq[1], in_iq[0]);
+        *out++ = TableAtan2(in_iq[3], in_iq[2]);
+        *out++ = TableAtan2(in_iq[5], in_iq[4]);
+        *out++ = TableAtan2(in_iq[7], in_iq[6]);
+        *out++ = TableAtan2(in_iq[9], in_iq[8]);
+        *out++ = TableAtan2(in_iq[11], in_iq[10]);
+        *out++ = TableAtan2(in_iq[13], in_iq[12]);
+        *out++ = TableAtan2(in_iq[15], in_iq[14]);
     }
     for (auto i = 0; i < n7; ++i, in_iq += 2) {
-        *out++ = scaled_atan2(in_iq[1], in_iq[0]);
+        *out++ = TableAtan2(in_iq[1], in_iq[0]);
     }
 }
 

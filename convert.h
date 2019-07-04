@@ -13,18 +13,18 @@
 
 namespace flightaware::uat {
     // Describes a sample data layout:
-    //   CU8  - interleaved I/Q data, 8 bit unsigned integers
-    //   CS8  - interleaved I/Q data, 8 bit signed integers
+    //   CU8   - interleaved I/Q data, 8 bit unsigned integers
+    //   CS8_  - interleaved I/Q data, 8 bit signed integers
     //   CS16H - interleaved I/Q data, 16 bit signed integers, host byte order
     //   CF32H - interleaved I/Q data, 32 bit signed floats, host byte order
-    enum class SampleFormat { CU8, CS8, CS16H, CF32H, UNKNOWN };
+    enum class SampleFormat { CU8, CS8_, CS16H, CF32H, UNKNOWN };
 
     // Return the number of bytes for 1 sample in the given format
     inline static unsigned BytesPerSample(SampleFormat f) {
         switch (f) {
         case SampleFormat::CU8:
             return 2;
-        case SampleFormat::CS8:
+        case SampleFormat::CS8_:
             return 2;
         case SampleFormat::CS16H:
             return 4;
@@ -102,9 +102,14 @@ namespace flightaware::uat {
 
     class CS16HConverter : public SampleConverter {
       public:
-        CS16HConverter() : SampleConverter(SampleFormat::CS16H) {}
+        CS16HConverter();
         void ConvertPhase(Bytes::const_iterator begin, Bytes::const_iterator end, PhaseBuffer::iterator out) override;
         void ConvertMagSq(Bytes::const_iterator begin, Bytes::const_iterator end, std::vector<double>::iterator out) override;
+
+      private:
+        std::uint16_t TableAtan(std::uint32_t r);
+        std::uint16_t TableAtan2(std::int16_t y, std::int16_t x);
+        std::array<std::uint16_t, 65536> lookup_atan_;
     };
 
     class CF32HConverter : public SampleConverter {

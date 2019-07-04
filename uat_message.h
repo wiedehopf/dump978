@@ -22,7 +22,7 @@ namespace flightaware::uat {
       public:
         RawMessage() : type_(MessageType::INVALID), received_at_(0), errors_(0), rssi_(0) {}
 
-        RawMessage(const Bytes &payload, std::uint64_t received_at, unsigned errors, float rssi) : payload_(payload), received_at_(received_at), errors_(errors), rssi_(rssi) {
+        RawMessage(const Bytes &payload, std::uint64_t received_at, unsigned errors, float rssi, std::uint64_t raw_timestamp = 0) : payload_(payload), received_at_(received_at), errors_(errors), rssi_(rssi), raw_timestamp_(raw_timestamp) {
             switch (payload_.size()) {
             case DOWNLINK_SHORT_DATA_BYTES:
                 type_ = MessageType::DOWNLINK_SHORT;
@@ -39,7 +39,7 @@ namespace flightaware::uat {
             }
         }
 
-        RawMessage(Bytes &&payload, std::uint64_t received_at, unsigned errors, float rssi) : payload_(std::move(payload)), received_at_(received_at), errors_(errors), rssi_(rssi) {
+        RawMessage(Bytes &&payload, std::uint64_t received_at, unsigned errors, float rssi, std::uint64_t raw_timestamp = 0) : payload_(std::move(payload)), received_at_(received_at), errors_(errors), rssi_(rssi), raw_timestamp_(raw_timestamp) {
             switch (payload_.size()) {
             case DOWNLINK_SHORT_DATA_BYTES:
                 type_ = MessageType::DOWNLINK_SHORT;
@@ -67,6 +67,8 @@ namespace flightaware::uat {
         unsigned Errors() const { return errors_; }
 
         float Rssi() const { return rssi_; }
+
+        std::uint64_t RawTimestamp() const { return raw_timestamp_; }
 
         // Number of raw bits in the message, excluding the sync bits
         unsigned BitLength() const {
@@ -146,6 +148,7 @@ namespace flightaware::uat {
         std::uint64_t received_at_;
         unsigned errors_;
         float rssi_;
+        std::uint64_t raw_timestamp_;
     };
 
     std::ostream &operator<<(std::ostream &os, const RawMessage &message);
@@ -154,19 +157,19 @@ namespace flightaware::uat {
     typedef std::shared_ptr<MessageVector> SharedMessageVector;
 
     // 2.2.4.5.1.2 "ADDRESS QUALIFIER" field
-    enum class AddressQualifier : unsigned char { ADSB_ICAO = 0, ADSB_OTHER = 1, TISB_ICAO = 2, TISB_TRACKFILE = 3, VEHICLE = 4, FIXED_BEACON = 5, ADSR_OTHER = 6, RESERVED_7 = 7, INVALID = 8 };
+    enum class AddressQualifier : unsigned char { ADSB_ICAO = 0, ADSB_OTHER = 1, TISB_ICAO = 2, TISB_TRACKFILE = 3, VEHICLE = 4, FIXED_BEACON = 5, ADSR_OTHER = 6, RESERVED = 7, INVALID = 8 };
 
     // 2.2.4.5.2.5 "A/G STATE" field
-    enum class AirGroundState : unsigned char { AIRBORNE_SUBSONIC = 0, AIRBORNE_SUPERSONIC = 1, ON_GROUND = 2, RESERVED = 3 };
+    enum class AirGroundState : unsigned char { AIRBORNE_SUBSONIC = 0, AIRBORNE_SUPERSONIC = 1, ON_GROUND = 2, RESERVED = 3, INVALID = 4 };
 
     // 2.2.4.5.2.7.1.1 "VV Src" subfield
-    enum class VerticalVelocitySource : unsigned char { GEOMETRIC = 0, BAROMETRIC = 1 };
+    enum class VerticalVelocitySource : unsigned char { GEOMETRIC = 0, BAROMETRIC = 1, INVALID = 2 };
 
     // 2.2.4.5.4.4 "EMERGENCY/PRIORITY STATUS" field
-    enum class EmergencyPriorityStatus : unsigned char { NONE = 0, GENERAL = 1, MEDICAL = 2, MINFUEL = 3, NORDO = 4, UNLAWFUL = 5, DOWNED = 6, RESERVED_7 = 7 };
+    enum class EmergencyPriorityStatus : unsigned char { NONE = 0, GENERAL = 1, MEDICAL = 2, MINFUEL = 3, NORDO = 4, UNLAWFUL = 5, DOWNED = 6, RESERVED = 7, INVALID = 8 };
 
     // 2.2.4.5.4.16 SIL Supplement Flag
-    enum class SILSupplement : unsigned char { PER_HOUR = 0, PER_SAMPLE = 1 };
+    enum class SILSupplement : unsigned char { PER_HOUR = 0, PER_SAMPLE = 1, INVALID = 2 };
 
     // 2.2.4.5.4.12 "CAPABILITY CODES" field
     struct CapabilityCodes {
@@ -191,7 +194,7 @@ namespace flightaware::uat {
     };
 
     // 2.2.4.5.6.1 "Selected Altitude Type (SAT)" field
-    enum class SelectedAltitudeType : unsigned char { MCP_FCU = 0, FMS = 1 };
+    enum class SelectedAltitudeType : unsigned char { MCP_FCU = 0, FMS = 1, INVALID = 2 };
 
     // 2.2.4.5.6.5 - 2.2.4.5.6.10 Mode Bits / Mode Indicators
     struct ModeIndicators {
@@ -213,6 +216,7 @@ namespace flightaware::uat {
 
         // Metadata copied from the raw message
         std::uint64_t received_at;
+        std::uint64_t raw_timestamp;
         unsigned errors;
         float rssi;
 

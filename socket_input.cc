@@ -220,6 +220,7 @@ boost::optional<RawMessage> RawInput::ParseLine(const std::string &line) {
     unsigned rs = 0;
     double rssi = 0;
     std::uint64_t t = 0;
+    std::uint64_t rt = 0;
 
     for (auto i = eod + 1; i < line.size();) {
         auto equals = line.find('=', i);
@@ -250,10 +251,16 @@ boost::optional<RawMessage> RawInput::ParseLine(const std::string &line) {
             } catch (const std::exception &e) {
                 t = 0;
             }
+        } else if (key == "rt") {
+            try {
+                rt = (std::uint64_t)std::stoll(value, nullptr, 10);
+            } catch (const std::exception &e) {
+                rt = 0;
+            }
         }
 
         i = semicolon + 1;
     }
 
-    return RawMessage(std::move(payload), t, rs, rssi);
+    return RawMessage(std::move(payload), t, rs, rssi, rt);
 }

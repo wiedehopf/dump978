@@ -3,6 +3,7 @@
 // Licensed under the 2-clause BSD license; see the LICENSE file
 
 #include "soapy_source.h"
+#include "exception.h"
 
 #include <iomanip>
 #include <iostream>
@@ -31,6 +32,11 @@ static void SoapyLogger(const SoapySDRLogLevel logLevel, const char *message) {
     };
     // clang-format on
 
+    if (logLevel == SOAPY_SDR_SSI) {
+        // we don't care about this, and it's not masked by log level
+        return;
+    }
+
     std::string level;
     auto i = levels.find(logLevel);
     if (i == levels.end())
@@ -45,7 +51,7 @@ static std::string FormatToSoapy(SampleFormat format) {
     // clang-format off
     static const std::map<SampleFormat,std::string> lookup = {
         { SampleFormat::CU8, SOAPY_SDR_CU8 },
-        { SampleFormat::CS8, SOAPY_SDR_CS8 },
+        { SampleFormat::CS8_, SOAPY_SDR_CS8 },
         { SampleFormat::CS16H, SOAPY_SDR_CS16 },
         { SampleFormat::CF32H, SOAPY_SDR_CF32 }
     };
@@ -63,7 +69,7 @@ static SampleFormat SoapyToFormat(std::string format) {
     // clang-format off
     static const std::map<std::string,SampleFormat> lookup = {
         { SOAPY_SDR_CU8, SampleFormat::CU8 },
-        { SOAPY_SDR_CS8, SampleFormat::CS8  },
+        { SOAPY_SDR_CS8, SampleFormat::CS8_ },
         { SOAPY_SDR_CS16, SampleFormat::CS16H },
         { SOAPY_SDR_CF32, SampleFormat::CF32H }
     };
@@ -77,6 +83,56 @@ static SampleFormat SoapyToFormat(std::string format) {
     }
 }
 
+#if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION >= 0x00060000)
+static SoapySDR::Kwargs KwargsFromString(const std::string &markup) { return SoapySDR::KwargsFromString(markup); }
+#else
+// Compatibility shim
+static std::string trim(std::string::const_iterator i1, std::string::const_iterator i2) {
+    auto begin = i1;
+    while (begin < i2 && std::isspace(*begin))
+        ++begin;
+
+    auto end = i2;
+    while (begin < end && std::isspace(end[-1]))
+        --end;
+
+    return std::string(begin, end);
+}
+
+static SoapySDR::Kwargs KwargsFromString(const std::string &markup) {
+    SoapySDR::Kwargs kwargs;
+
+    auto scan = markup.begin();
+    while (scan < markup.end()) {
+        auto key_start = scan;
+        while (scan < markup.end() && *scan != '=' && *scan != ',') {
+            ++scan;
+        }
+
+        std::string key = trim(key_start, scan);
+        if (scan == markup.end() || *scan == ',') {
+            ++scan;
+            kwargs[key] = "";
+        } else {
+            ++scan;
+            auto value_start = scan;
+            while (scan < markup.end() && *scan != ',') {
+                ++scan;
+            }
+
+            std::string value = trim(value_start, scan);
+            ++scan;
+
+            if (!key.empty()) {
+                kwargs[key] = value;
+            }
+        }
+    }
+
+    return kwargs;
+}
+#endif
+
 class SoapySDRCategory : public boost::system::error_category {
   public:
     const char *name() const noexcept override { return "soapysdr"; }
@@ -88,15 +144,22 @@ static SoapySDRCategory soapysdr_category;
 SoapySampleSource::SoapySampleSource(boost::asio::io_service &service, const std::string &device_name, const boost::program_options::variables_map &options) : timer_(service), device_name_(device_name), options_(options) {
     if (!log_handler_registered_.exchange(true)) {
         SoapySDR::registerLogHandler(SoapyLogger);
+        SoapySDR::setLogLevel(SOAPY_SDR_NOTICE);
     }
 }
 
 SoapySampleSource::~SoapySampleSource() { Stop(); }
 
 void SoapySampleSource::Init() {
-    device_ = {SoapySDR::Device::make(device_name_), &SoapySDR::Device::unmake};
+    try {
+        void (*unmake)(SoapySDR::Device *) = &SoapySDR::Device::unmake; // select the right overload
+        device_ = {SoapySDR::Device::make(device_name_), unmake};
+    } catch (const std::runtime_error &err) {
+        throw config_error(std::string("No matching SoapySDR device found (cause: ") + err.what() + ")");
+    }
+
     if (!device_) {
-        throw std::runtime_error("no suitable device found");
+        throw config_error("No matching SoapySDR device found");
     }
 
     // hacky mchackerson
@@ -106,7 +169,7 @@ void SoapySampleSource::Init() {
 
     if (options_.count("sdr-auto-gain")) {
         if (!device_->hasGainMode(SOAPY_SDR_RX, 0)) {
-            throw std::runtime_error("device does not support automatic gain mode");
+            throw config_error("Device does not support automatic gain mode");
         }
         std::cerr << "SoapySDR: using automatic gain" << std::endl;
         device_->setGainMode(SOAPY_SDR_RX, 0, true);
@@ -145,14 +208,10 @@ void SoapySampleSource::Init() {
     }
 
     if (options_.count("sdr-device-settings")) {
-#if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION >= 0x00060000)
-        for (auto kv : SoapySDR::KwargsFromString(options_["sdr-stream-settings"].as<std::string>())) {
+        for (auto kv : KwargsFromString(options_["sdr-device-settings"].as<std::string>())) {
             std::cerr << "SoapySDR: using device setting " << kv.first << "=" << kv.second << std::endl;
             device_->writeSetting(kv.first, kv.second);
         }
-#else
-        std::cerr << "SoapySDR: --sdr-device-settings option ignored in this build" << std::endl;
-#endif
     }
 
     if (options_.count("format")) {
@@ -165,12 +224,12 @@ void SoapySampleSource::Init() {
         soapy_format = device_->getNativeStreamFormat(SOAPY_SDR_RX, 0, fullScale);
         format_ = SoapyToFormat(soapy_format);
         if (format_ == SampleFormat::UNKNOWN) {
-            throw std::runtime_error("Unsupported native SDR format: " + soapy_format + "; try specifying --format");
+            throw config_error("Unsupported native SDR format: " + soapy_format + "; try specifying --format");
         }
     } else {
         soapy_format = FormatToSoapy(format_);
         if (soapy_format.empty()) {
-            throw std::runtime_error("unsupported sample format");
+            throw config_error("Unsupported sample format");
         }
     }
 
@@ -183,19 +242,23 @@ void SoapySampleSource::Init() {
     }
 
     if (options_.count("sdr-stream-settings")) {
-#if defined(SOAPY_SDR_API_VERSION) && (SOAPY_SDR_API_VERSION >= 0x00060000)
-        for (auto kv : SoapySDR::KwargsFromString(options_["sdr-stream-settings"].as<std::string>())) {
-            std::cerr << "SoapySDR: using stream setting " << kv.first << "=" << kv.second << std::endl;
+        for (auto kv : KwargsFromString(options_["sdr-stream-settings"].as<std::string>())) {
             stream_settings[kv.first] = kv.second;
         }
-#else
-        std::cerr << "SoapySDR: --sdr-stream-settings options ignored in this build" << std::endl;
-#endif
     }
 
-    stream_ = {device_->setupStream(SOAPY_SDR_RX, soapy_format, channels, stream_settings), std::bind(&SoapySDR::Device::closeStream, device_, std::placeholders::_1)};
+    for (auto &kv : stream_settings) {
+        std::cerr << "SoapySDR: using stream setting " << kv.first << "=" << kv.second << std::endl;
+    }
+
+    try {
+        stream_ = {device_->setupStream(SOAPY_SDR_RX, soapy_format, channels, stream_settings), std::bind(&SoapySDR::Device::closeStream, device_, std::placeholders::_1)};
+    } catch (const std::runtime_error &err) {
+        throw config_error(std::string("Failed to construct soapysdr stream (cause: ") + err.what() + ")");
+    }
+
     if (!stream_) {
-        throw std::runtime_error("failed to construct stream");
+        throw config_error("Failed to construct soapysdr stream");
     }
 }
 
@@ -250,6 +313,10 @@ void SoapySampleSource::Run() {
     Bytes block;
     block.reserve(elements * bytes_per_element);
 
+    const auto overflow_report_interval = std::chrono::milliseconds(15000);
+    auto last_overflow_report = std::chrono::steady_clock::now();
+    unsigned overflow_count = 0;
+
     while (!halt_) {
         void *buffs[1] = {block.data()};
         int flags = 0;
@@ -257,14 +324,31 @@ void SoapySampleSource::Run() {
 
         block.resize(elements * bytes_per_element);
         auto elements_read = device_->readStream(stream_.get(), buffs, elements, flags, time_ns,
-                                                 /* timeout, microseconds */ 1000000);
+                                                 /* timeout, microseconds */ 5000000);
         if (halt_) {
             break;
         }
 
         if (elements_read < 0) {
-            DispatchError(boost::system::error_code{elements_read, soapysdr_category});
-            break;
+            if (elements_read == SOAPY_SDR_OVERFLOW) {
+                ++overflow_count;
+            } else {
+                DispatchError(boost::system::error_code{elements_read, soapysdr_category});
+                break;
+            }
+        }
+
+        if (overflow_count > 0) {
+            auto now = std::chrono::steady_clock::now();
+            if (now - last_overflow_report > overflow_report_interval) {
+                std::cerr << "SoapySDR: " << overflow_count << " recent input overruns (sample data dropped)" << std::endl;
+                last_overflow_report = now;
+                overflow_count = 0;
+            }
+        }
+
+        if (elements_read <= 0) {
+            continue;
         }
 
         block.resize(elements_read * bytes_per_element);

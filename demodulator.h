@@ -50,6 +50,8 @@ namespace flightaware::uat {
     class Receiver : public MessageSource {
       public:
         virtual void HandleSamples(std::uint64_t timestamp, Bytes::const_iterator begin, Bytes::const_iterator end) = 0;
+
+        virtual void HandleError(const boost::system::error_code &ec) { DispatchError(ec); }
     };
 
     class SingleThreadReceiver : public Receiver {
