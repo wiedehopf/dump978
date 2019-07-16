@@ -14,9 +14,9 @@
 #include "track.h"
 
 using namespace flightaware::uat;
-using namespace flightaware::skyview;
+using namespace flightaware::skyaware;
 
-void SkyviewWriter::Start() {
+void SkyAwareWriter::Start() {
     nlohmann::json receiver_json;
 
     receiver_json["version"] = "dump978 " VERSION;
@@ -34,9 +34,9 @@ void SkyviewWriter::Start() {
     PeriodicWrite();
 }
 
-void SkyviewWriter::Stop() { timer_.cancel(); }
+void SkyAwareWriter::Stop() { timer_.cancel(); }
 
-void SkyviewWriter::PeriodicWrite() {
+void SkyAwareWriter::PeriodicWrite() {
     using json = nlohmann::json;
     json aircraft_json;
 

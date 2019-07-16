@@ -15,7 +15,7 @@
 #include "uat_message.h"
 
 using namespace flightaware::uat;
-using namespace flightaware::skyview;
+using namespace flightaware::skyaware;
 
 namespace po = boost::program_options;
 using boost::asio::ip::tcp;
@@ -70,13 +70,13 @@ static int realmain(int argc, char **argv) {
     }
 
     if (opts.count("help")) {
-        std::cerr << "skyview978 " << VERSION << std::endl;
+        std::cerr << "skyaware978 " << VERSION << std::endl;
         std::cerr << desc << std::endl;
         return EXIT_NO_RESTART;
     }
 
     if (opts.count("version")) {
-        std::cerr << "skyview978 " << VERSION << std::endl;
+        std::cerr << "skyaware978 " << VERSION << std::endl;
         return EXIT_NO_RESTART;
     }
 
@@ -109,7 +109,7 @@ static int realmain(int argc, char **argv) {
     }
 
     auto dir = opts["json-dir"].as<std::string>();
-    auto writer = SkyviewWriter::Create(io_service, tracker, dir, std::chrono::milliseconds(1000), opts["history-count"].as<unsigned>(), std::chrono::milliseconds(opts["history-interval"].as<unsigned>() * 1000), location);
+    auto writer = SkyAwareWriter::Create(io_service, tracker, dir, std::chrono::milliseconds(1000), opts["history-count"].as<unsigned>(), std::chrono::milliseconds(opts["history-interval"].as<unsigned>() * 1000), location);
 
     writer->Start();
     tracker->Start();
