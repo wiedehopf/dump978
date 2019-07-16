@@ -4,8 +4,8 @@
 // All rights reserved.
 // Licensed under the 2-clause BSD license; see the LICENSE file
 
-#ifndef SKYVIEW_WRITER_H
-#define SKYVIEW_WRITER_H
+#ifndef SKYAWARE_WRITER_H
+#define SKYAWARE_WRITER_H
 
 #include <chrono>
 #include <memory>

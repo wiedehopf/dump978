@@ -10,7 +10,7 @@ DPKG_EXPORT_BUILDFLAGS = 1
 include /usr/share/dpkg/default.mk
 
 override_dh_auto_build:
-	dh_auto_build -- VERSION=$(DEB_VERSION) dump978-fa skyview978
+	dh_auto_build -- VERSION=$(DEB_VERSION) dump978-fa skyaware978
 
 %:
 	dh $@ --with=systemd

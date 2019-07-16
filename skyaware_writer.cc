@@ -2,7 +2,7 @@
 // All rights reserved.
 // Licensed under the 2-clause BSD license; see the LICENSE file
 
-#include "skyview_writer.h"
+#include "skyaware_writer.h"
 
 #include <fstream>
 #include <iomanip>
