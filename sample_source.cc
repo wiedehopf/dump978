@@ -102,6 +102,8 @@ void StdinSampleSource::ScheduleRead() {
         return;
     }
 
+    block_.resize(block_.capacity());
+
     auto self = shared_from_this();
     stream_.async_read_some(boost::asio::buffer(block_.data() + used_, block_.size() - used_), [this, self](const boost::system::error_code &ec, std::size_t bytes_transferred) {
         if (ec) {
