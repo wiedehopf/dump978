@@ -30,7 +30,7 @@ node(label: 'raspberrypi') {
         }
 
         stage("Test install on ${dist}") {
-            sh "/build/repo/validate-packages.sh ${dist} ${results}/dump978-fa_*.deb ${results}/skyview978_*.deb"
+            sh "/build/repo/validate-packages.sh ${dist} ${results}/dump978-fa_*.deb ${results}/skyaware978_*.deb"
         }
     }
 

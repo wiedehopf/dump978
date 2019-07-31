@@ -13,8 +13,8 @@ dump978-fa is the main binary. It talks to the SDR, demodulates UAT data,
 and provides the data in a variety of ways - either as raw messages or as
 json-formatted decoded messages, and either on a network port or to stdout.
 
-skyview978 connects to a running dump978-fa and writes json files suitable
-for use by the Skyview web map.
+skyaware978 connects to a running dump978-fa and writes json files suitable
+for use by the SkyAware web map.
 
 ## Building as a package
 
@@ -30,7 +30,7 @@ $ sudo apt-get install \
   libsoapysdr-dev
 
 $ dpkg-buildpackage -b
-$ sudo dpkg -i ../dump978-fa_*.deb ../skyview978_*.deb
+$ sudo dpkg -i ../dump978-fa_*.deb ../skyaware978_*.deb
 ```
 
 ## Building from source
@@ -49,7 +49,7 @@ $ sudo apt-get install soapysdr-module-rtlsdr
 ## Configuration
 
 For a package install, see `/etc/default/dump978-fa` and
-`/etc/default/skyview978`.
+`/etc/default/skyaware978`.
 
 The main options are:
 

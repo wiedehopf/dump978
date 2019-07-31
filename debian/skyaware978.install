@@ -1,0 +1,4 @@
+skyaware/* usr/share/skyaware978/html
+debian/lighttpd/* etc/lighttpd/conf-available
+skyaware978 usr/bin/
+debian/start-skyaware978 usr/share/skyaware978/
