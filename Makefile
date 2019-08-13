@@ -14,7 +14,7 @@ LIBS_SDR=-lSoapySDR
 
 all: dump978-fa skyaware978
 
-dump978-fa: dump978_main.o socket_output.o message_dispatch.o fec.o libs/fec/init_rs_char.o libs/fec/decode_rs_char.o sample_source.o soapy_source.o convert.o demodulator.o uat_message.o
+dump978-fa: dump978_main.o socket_output.o message_dispatch.o fec.o libs/fec/init_rs_char.o libs/fec/decode_rs_char.o sample_source.o soapy_source.o convert.o demodulator.o uat_message.o stratux_serial.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@ $(LIBS) $(LIBS_SDR)
 
 faup978: faup978_main.o socket_input.o uat_message.o track.o faup978_reporter.o

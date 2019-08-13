@@ -1,0 +1,4 @@
+# Stratux uatradio.
+#  0403:7028 (Stratux UATRadio)
+ATTRS{idProduct}=="7028", ATTRS{idVendor}=="0403", RUN+="/sbin/modprobe -q ftdi_sio" RUN+="/bin/sh -c 'echo 0403 7028 > /sys/bus/usb-serial/drivers/ftdi_sio/new_id'"
+ATTRS{idProduct}=="7028", ATTRS{idVendor}=="0403", SUBSYSTEM=="tty", OWNER="root", MODE="0666", SYMLINK+="uatradio"
