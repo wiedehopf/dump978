@@ -16,8 +16,8 @@ Description: ADS-B UAT Ground Station System
  FlightAware's SDR decoder for UAT ADS-B messages on 978MHz.
 
 Package: skyaware978
-Replaces: skyview978 (<< 3.7.2)
-Breaks: skyview978 (<< 3.7.2)
+Replaces: skyview978 (<< 3.7.2~)
+Breaks: skyview978 (<< 3.7.2~)
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, adduser, lighttpd
 Description: Local web interface for dump978
