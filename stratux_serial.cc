@@ -2,6 +2,10 @@
 // All rights reserved.
 // Licensed under the 2-clause BSD license; see the LICENSE file
 
+// Try to convince asio to support serial hardware flowcontrol
+#define _DEFAULT_SOURCE
+#define _BSD_SOURCE
+
 #include "stratux_serial.h"
 
 #include <iostream>
@@ -32,14 +36,25 @@ enum class StratuxSerial::ParserState {
 StratuxSerial::StratuxSerial(boost::asio::io_service &io_service, const std::string &path) : io_service_(io_service), path_(path), port_(io_service), read_timer_(io_service), parser_state_(ParserState::PREAMBLE), preamble_index_(0) {}
 
 void StratuxSerial::Start() {
-    port_.open(path_);
+    try {
+        port_.open(path_);
 
-    // configure for 2Mbps, 8N1, hardware flow control
-    port_.set_option(boost::asio::serial_port_base::character_size(8));
-    port_.set_option(boost::asio::serial_port_base::stop_bits(boost::asio::serial_port_base::stop_bits::one));
-    port_.set_option(boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::none));
-    port_.set_option(boost::asio::serial_port_base::baud_rate(2000000));
-    // port_.set_option(boost::asio::serial_port_base::flow_control(boost::asio::serial_port_base::flow_control::hardware));
+        // configure for 2Mbps, 8N1, hardware flow control
+        port_.set_option(boost::asio::serial_port_base::character_size(8));
+        port_.set_option(boost::asio::serial_port_base::stop_bits(boost::asio::serial_port_base::stop_bits::one));
+        port_.set_option(boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::none));
+        port_.set_option(boost::asio::serial_port_base::baud_rate(2000000));
+
+        // not_supported usually means a library build problem, ignore that
+        boost::system::error_code ec;
+        port_.set_option(boost::asio::serial_port_base::flow_control(boost::asio::serial_port_base::flow_control::hardware), ec);
+        if (ec && ec != boost::asio::error::operation_not_supported) {
+            throw boost::system::system_error(ec);
+        }
+    } catch (const boost::system::system_error &e) {
+        HandleError(e.code());
+        return;
+    }
 
     StartReading();
 }
