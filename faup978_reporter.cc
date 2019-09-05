@@ -77,7 +77,7 @@ void Reporter::PeriodicReport() {
 void Reporter::ReportOneAircraft(const Tracker::AddressKey &key, const AircraftState &aircraft, std::uint64_t now) {
     // don't report TIS-B at all
     if (aircraft.address_qualifier == AddressQualifier::TISB_ICAO || aircraft.address_qualifier == AddressQualifier::TISB_TRACKFILE) {
-        continue;
+        return;
     }
 
     auto &last = reported_[key];
