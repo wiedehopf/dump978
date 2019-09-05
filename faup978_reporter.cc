@@ -75,6 +75,11 @@ void Reporter::PeriodicReport() {
 }
 
 void Reporter::ReportOneAircraft(const Tracker::AddressKey &key, const AircraftState &aircraft, std::uint64_t now) {
+    // don't report TIS-B at all
+    if (aircraft.address_qualifier == AddressQualifier::TISB_ICAO || aircraft.address_qualifier == AddressQualifier::TISB_TRACKFILE) {
+        continue;
+    }
+
     auto &last = reported_[key];
     auto &last_state = last.report_state;
 
@@ -85,17 +90,6 @@ void Reporter::ReportOneAircraft(const Tracker::AddressKey &key, const AircraftS
     if (aircraft.last_message_time <= last.report_time) {
         // no data received since last report
         return;
-    }
-
-    // If we have both TISB_ICAO and ADSB_ICAO, prefer the ADS-B data
-    if (aircraft.address_qualifier == AddressQualifier::TISB_ICAO) {
-        auto adsb = reported_.find({AddressQualifier::ADSB_ICAO, aircraft.address});
-        if (adsb != reported_.end() && adsb->second.report_time > 0) {
-            // we are reporting from direct ADS-B state, inhibit reporting TIS-B
-            // reset reporting times so that we do a full report if we later switch back to TIS-B
-            last.report_time = last.slow_report_time = 0;
-            return;
-        }
     }
 
     bool changed = false;
