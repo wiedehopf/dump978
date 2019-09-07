@@ -3,11 +3,11 @@ ifneq ($(VERSION),)
   CPPFLAGS+=-DVERSION=\"$(VERSION)\"
 endif
 
-CC=gcc
-CFLAGS+=-Wall -Werror -O2 -g -Ilibs
+CC ?= gcc
+CFLAGS += -Wall -Werror -O2 -g -Ilibs
 
-CXX=g++
-CXXFLAGS+=-std=c++11 -Wall -Wno-psabi -Werror -O2 -g -Ilibs
+CXX ?= g++
+CXXFLAGS += -std=c++11 -Wall -Wno-psabi -Werror -O2 -g -Ilibs
 
 LIBS=-lboost_system -lboost_program_options -lboost_regex -lboost_filesystem -lpthread
 LIBS_SDR=-lSoapySDR
