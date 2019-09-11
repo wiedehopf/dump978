@@ -12,8 +12,6 @@
 using namespace flightaware::uat;
 using namespace flightaware::faup978;
 
-static const char *const TSV_VERSION = "6U";
-
 void Reporter::Start() {
     PeriodicReport();
     PurgeOld();

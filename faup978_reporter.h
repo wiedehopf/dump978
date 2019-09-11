@@ -28,7 +28,7 @@ namespace flightaware::faup978 {
       public:
         typedef std::shared_ptr<Reporter> Pointer;
 
-        static constexpr const char *TSV_VERSION = "4U";
+        static constexpr const char *TSV_VERSION = "6U";
 
         static Pointer Create(boost::asio::io_service &service, std::chrono::milliseconds interval = std::chrono::milliseconds(500), std::chrono::milliseconds timeout = std::chrono::seconds(300)) { return Pointer(new Reporter(service, interval, timeout)); }
 
