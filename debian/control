@@ -27,7 +27,7 @@ Description: Local web interface for dump978
 Package: skyview978
 Depends: skyaware978, ${misc:Depends}
 Architecture: all
-riority: optional
+Priority: optional
 Section: oldlibs
 Description: transitional package
  This is a transitional package. It can safely be removed.
