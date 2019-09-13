@@ -29,7 +29,7 @@ case "$1" in
 
 	if dpkg --compare-versions "$2" lt "3.7.2~"
 	then
-		lighty-disable-mod skyview978 || true
+		rm /etc/lighttpd/conf-enabled/89-skyview978.conf || true
 	fi
 
         # set up lighttpd
