@@ -1,0 +1,2 @@
+rm_conffile /etc/lighttpd/conf-available/89-skyview978.conf 3.7.2~
+rm_conffile /etc/lighttpd/conf-available/88-skyview978-statcache.conf 3.7.2~

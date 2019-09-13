@@ -27,6 +27,11 @@ case "$1" in
             adduser --system --home /usr/share/$NAME --no-create-home --quiet "$RUNAS"
         fi
 
+	if dpkg --compare-versions "$2" lt "3.7.2~"
+	then
+		lighty-disable-mod skyview978 || true
+	fi
+
         # set up lighttpd
         echo "Enabling lighttpd integration.." >&2
         lighty-enable-mod skyaware978 || true
